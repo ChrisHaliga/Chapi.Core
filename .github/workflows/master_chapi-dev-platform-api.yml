@@ -63,6 +63,6 @@ jobs:
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'chapi-dev-platform-api'
-          slot-name: 'Development'
+          slot-name: 'Production'
           package: .
           
