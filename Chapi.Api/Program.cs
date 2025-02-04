@@ -1,6 +1,6 @@
+using Chapi.Api.Middleware;
 using Chapi.Api.Models.Configuration;
 using Chapi.Api.Services;
-using Chapi.Api.Wrappers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +13,10 @@ var usersConfigData = builder.Configuration.GetSection("UsersConfigData").Get<Us
 if (usersConfigData == null) throw new InvalidOperationException("UsersConfigData data is missing or invalid.");
 builder.Services.AddSingleton(usersConfigData.ToValidated());
 
+var authorizationKey = builder.Configuration.GetValue<string>("AuthorizationKey");
+if (string.IsNullOrEmpty(authorizationKey)) throw new InvalidOperationException("AuthorizationKey data is missing or invalid.");
+builder.Services.AddSingleton(new ApiKeyAuthorization(authorizationKey));
+
 builder.Services.AddTransient<IDatabaseService, DatabaseService>();
 builder.Services.AddTransient<UsersService>();
 builder.Services.AddTransient<CacheService>();
@@ -22,7 +26,10 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.OperationFilter<ApiKeyAuthorizationFilter>();
+});
 
 var app = builder.Build();
 

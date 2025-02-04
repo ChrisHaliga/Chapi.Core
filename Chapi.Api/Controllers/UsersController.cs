@@ -1,9 +1,11 @@
-﻿using Chapi.Api.Models.Users;
+﻿using Chapi.Api.Middleware;
+using Chapi.Api.Models.Users;
 using Chapi.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Chapi.Api.Controllers
 {
+    [ApiKeyAuthorization]
     [ApiController]
     [Route("[controller]")]
     public class UsersController : ControllerBase
