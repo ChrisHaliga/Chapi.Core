@@ -26,9 +26,16 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> Put([FromQuery] bool? hard, [FromBody] Group group, CancellationToken cancellationToken)
+        public async Task<IActionResult> Put([FromBody] Group group, CancellationToken cancellationToken)
         {
-            await UpdateItem(group, hard ?? false, cancellationToken);
+            await UpdateItem(group, true, cancellationToken);
+            return Ok();
+        }
+
+        [HttpPatch]
+        public async Task<IActionResult> Patch([FromBody] Group group, CancellationToken cancellationToken)
+        {
+            await UpdateItem(group, false, cancellationToken);
             return Ok();
         }
 
