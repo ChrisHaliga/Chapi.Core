@@ -8,16 +8,17 @@ namespace Chapi.Api.Services
 {
     public interface IDatabaseService
     {
-        Task CreateItemAsync<T>(T item, string databaseName, string containerName, string? partitionKey = null, CancellationToken cancellationToken = default) where T : CosmosDtoBase;
-        Task<T?> GetItemAsync<T>(string id, string databaseName, string containerName, QueryDefinition? query = null, CancellationToken cancellationToken = default) where T : CosmosDtoBase;
-        Task UpdateItemAsync<T>(T item, string databaseName, string containerName, string? partitionKey = null, CancellationToken cancellationToken = default) where T : CosmosDtoBase;
-        Task DeleteItemAsync<T>(T item, string databaseName, string containerName, string? partitionKey = null, CancellationToken cancellationToken = default) where T : CosmosDtoBase;
+        Task CreateItemAsync<T, TWithId>(T item, string databaseName, string containerName, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId;
+        Task<T?> GetItemAsync<T, TWithId>(T item, string databaseName, string containerName, QueryDefinition? query = null, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId;
+        Task UpdateItemAsync<T, TWithId>(T item, string databaseName, string containerName, bool hard = false, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId;
+        Task DeleteItemAsync<T, TWithId>(T item, string databaseName, string containerName, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId;
     }
 
-    internal class DatabaseService: IDatabaseService
+    internal class DatabaseService : IDatabaseService
     {
         private readonly CacheService _cache;
         private readonly string _cosmosDbUri;
+
         private CosmosWrapper CosmosService(string databaseName, string containerName) => new CosmosWrapper(databaseName, containerName, _cosmosDbUri, _cache);
 
         public DatabaseService(CosmosConfigData config, CacheService cache)
@@ -26,30 +27,25 @@ namespace Chapi.Api.Services
             _cosmosDbUri = config.CosmosDbUri;
         }
 
-        public async Task CreateItemAsync<T>(T item, string databaseName, string containerName, string? partitionKey = null, CancellationToken cancellationToken = default) where T : CosmosDtoBase
+        public async Task CreateItemAsync<T, TWithId>(T item, string databaseName, string containerName, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
         {
-            await CosmosService(databaseName, containerName).CreateItemAsync(new CosmosItemData<T>(item, partitionKey), cancellationToken);
+            await CosmosService(databaseName, containerName).CreateItemAsync<T, TWithId>(item, cancellationToken);
         }
 
-        public async Task<T?> GetItemAsync<T>(string id, string databaseName, string containerName, QueryDefinition? query = null, CancellationToken cancellationToken = default) where T : CosmosDtoBase
+        public async Task<T?> GetItemAsync<T, TWithId>(T item, string databaseName, string containerName, QueryDefinition? query = null, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
         {
-            return await CosmosService(databaseName, containerName).GetItemAsync(new CosmosItemData<T>(id), query, cancellationToken);
+            return await CosmosService(databaseName, containerName).GetItemAsync<T, TWithId>(item, query, cancellationToken);
         }
 
 
-        public async Task UpdateItemAsync<T>(T item, string databaseName, string containerName, string? partitionKey = null, CancellationToken cancellationToken = default) where T : CosmosDtoBase
-        {
-            await CosmosService(databaseName, containerName).UpdateItemAsync(new CosmosItemData<T>(item, partitionKey), cancellationToken);
+        public async Task UpdateItemAsync<T, TWithId>(T item, string databaseName, string containerName, bool hard = false, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
+{
+            await CosmosService(databaseName, containerName).UpdateItemAsync<T, TWithId>(item, hard, cancellationToken);
         }
 
-        public async Task DeleteItemAsync<T>(T item, string databaseName, string containerName, string? partitionKey = null, CancellationToken cancellationToken = default) where T : CosmosDtoBase
-        {
-            await CosmosService(databaseName, containerName).DeleteItemAsync(new CosmosItemData<T>(item, partitionKey), cancellationToken);
-        }
-
-        public async Task DeleteItemAsync<T>(string id, string databaseName, string containerName, string? partitionKey = null, CancellationToken cancellationToken = default) where T : CosmosDtoBase
-        {
-            await CosmosService(databaseName, containerName).DeleteItemAsync(new CosmosItemData<T>(id, partitionKey), cancellationToken);
+        public async Task DeleteItemAsync<T, TWithId>(T item, string databaseName, string containerName, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
+{
+            await CosmosService(databaseName, containerName).DeleteItemAsync<T, TWithId>(item, cancellationToken);
         }
     }
 }

@@ -1,46 +1,44 @@
 ﻿using Chapi.Api.Middleware;
-using Chapi.Api.Models.Users;
+using Chapi.Api.Models.Configuration;
+using Chapi.Api.Models;
 using Chapi.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Chapi.Api.Controllers
 {
-    [ApiKeyAuthorization]
-    [ApiController]
-    [Route("[controller]")]
-    public class UsersController : ControllerBase
+    public class UsersController : CrudController<User, UserWithId>
     {
-        private readonly UsersService _userService;
-        public UsersController(UsersService userService)
-        {
-            _userService = userService;
-        }
+        public UsersController(CrudConfigData<User> config, IDatabaseService cosmosService) : base(cosmosService, config) { }
+
 
         [HttpGet("{email}")]
-        public async Task<User?> Get([FromRoute] string email, CancellationToken cancellationToken)
+        public async Task<IActionResult> Get([FromRoute] string email, CancellationToken cancellationToken)
         {
-            return await _userService.GetAsync(email, cancellationToken);
+            var userQuery = new User() { Email = email };
+            
+            var userFound = await GetItem(userQuery, cancellationToken);
+
+            return userFound == null ? NotFound() : Ok(userFound);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] UserCreateDto userDto, CancellationToken cancellationToken)
+        public async Task<IActionResult> Post([FromBody] User user, CancellationToken cancellationToken)
         {
-
-            await _userService.CreateAsync(new User(userDto), cancellationToken);
+            await CreateItem(user, cancellationToken);
             return Ok();
         }
 
         [HttpPut]
-        public async Task<IActionResult> Put([FromBody] User user, CancellationToken cancellationToken)
+        public async Task<IActionResult> Put([FromQuery] bool? hard, [FromBody] User user, CancellationToken cancellationToken)
         {
-            await _userService.UpdateAsync(user, cancellationToken);
+            await UpdateItem(user, hard ?? false, cancellationToken);
             return Ok();
         }
 
         [HttpDelete]
-        public async Task<IActionResult> Delete([FromBody] User user, CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete([FromBody] UserMinimalDto userMinimal, CancellationToken cancellationToken)
         {
-            await _userService.DeleteAsync(user, cancellationToken);
+            await DeleteItem(userMinimal.ToUser(), cancellationToken);
             return Ok();
         }
     }

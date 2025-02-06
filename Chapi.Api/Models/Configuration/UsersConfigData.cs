@@ -1,19 +1,24 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace Chapi.Api.Models.Configuration
+﻿namespace Chapi.Api.Models.Configuration
 {
-    public class UsersConfigDataDto : IConfigData<UsersConfigData>
+    public class CrudConfigDataDto<T> : IConfigData<CrudConfigData<T>>
     {
         public string? DatabaseName { get; set; }
         public string? ContainerName { get; set; }
 
-        public UsersConfigData ToValidated()
+        public CrudConfigData<T> ToValidated()
         {
             if(string.IsNullOrEmpty(DatabaseName)) throw new ArgumentNullException(nameof(DatabaseName));
             if(string.IsNullOrEmpty(ContainerName)) throw new ArgumentNullException(nameof(ContainerName));
 
-            return new UsersConfigData(DatabaseName, ContainerName);
+            return new CrudConfigData<T>(DatabaseName, ContainerName);
+        }
+
+        public static void AddSingleton(WebApplicationBuilder builder, string configKey)
+        {
+            var configData = builder.Configuration.GetSection(configKey).Get<CrudConfigDataDto<T>>();
+            if (configData == null) throw new InvalidOperationException($"configKey data is missing or invalid.");
+            builder.Services.AddSingleton(configData.ToValidated());
         }
     }
-    public record UsersConfigData(string DatabaseName, string ContainerName);
+    public record CrudConfigData<T>(string DatabaseName, string ContainerName);
 }
