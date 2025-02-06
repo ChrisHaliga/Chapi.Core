@@ -1,46 +1,41 @@
 ﻿using Chapi.Api.Middleware;
-using Chapi.Api.Models.Groups;
+using Chapi.Api.Models.Configuration;
+using Chapi.Api.Models;
 using Chapi.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Chapi.Api.Controllers
 {
-    [ApiKeyAuthorization]
-    [ApiController]
-    [Route("[controller]")]
-    public class GroupsController : ControllerBase
+    public class GroupsController : CrudController<Group, GroupWithId>
     {
-        private readonly GroupsService _groupsService;
-        public GroupsController(GroupsService groupsService)
-        {
-            _groupsService = groupsService;
-        }
+        public GroupsController(CrudConfigData<Group> config, IDatabaseService cosmosService) : base(cosmosService, config) { }
+
 
         [HttpGet("{name}")]
-        public async Task<GroupDto?> Get([FromRoute] string name, CancellationToken cancellationToken)
+        public async Task<Group?> Get([FromRoute] string name, CancellationToken cancellationToken)
         {
-            return await _groupsService.GetAsync(name, cancellationToken);
+            var user = new Group() { Name = name };
+            return await GetItem(user, cancellationToken);
         }
 
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Group group, CancellationToken cancellationToken)
         {
-
-            await _groupsService.CreateAsync(group, cancellationToken);
+            await CreateItem(group, cancellationToken);
             return Ok();
         }
 
         [HttpPut]
-        public async Task<IActionResult> Put([FromBody] Group group, CancellationToken cancellationToken)
+        public async Task<IActionResult> Put([FromQuery] bool? hard, [FromBody] Group group, CancellationToken cancellationToken)
         {
-            await _groupsService.UpdateAsync(group, cancellationToken);
+            await UpdateItem(group, hard ?? false, cancellationToken);
             return Ok();
         }
 
         [HttpDelete]
-        public async Task<IActionResult> Delete([FromBody] Group group, CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete([FromBody] GroupMinimalDto group, CancellationToken cancellationToken)
         {
-            await _groupsService.DeleteAsync(group, cancellationToken);
+            await DeleteItem(group.ToGroup(), cancellationToken);
             return Ok();
         }
     }

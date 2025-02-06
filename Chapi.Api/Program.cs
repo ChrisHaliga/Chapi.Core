@@ -1,5 +1,6 @@
 using Chapi.Api.Middleware;
 using Chapi.Api.Models.Configuration;
+using Chapi.Api.Models;
 using Chapi.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,16 +10,15 @@ var cosmosConfigData = builder.Configuration.GetSection("CosmosConfigData").Get<
 if(cosmosConfigData == null) throw new InvalidOperationException("CosmosConfig data is missing or invalid.");
 builder.Services.AddSingleton(cosmosConfigData.ToValidated());
 
-var usersConfigData = builder.Configuration.GetSection("UsersConfigData").Get<UsersConfigDataDto>();
-if (usersConfigData == null) throw new InvalidOperationException("UsersConfigData data is missing or invalid.");
-builder.Services.AddSingleton(usersConfigData.ToValidated());
+CrudConfigDataDto<User>.AddSingleton(builder, "UsersConfigData");
+CrudConfigDataDto<Group>.AddSingleton(builder, "GroupsConfigData");
 
 var authorizationKey = builder.Configuration.GetValue<string>("AuthorizationKey");
 if (string.IsNullOrEmpty(authorizationKey)) throw new InvalidOperationException("AuthorizationKey data is missing or invalid.");
 builder.Services.AddSingleton(new ApiKeyAuthorization(authorizationKey));
 
 builder.Services.AddTransient<IDatabaseService, DatabaseService>();
-builder.Services.AddTransient<UsersService>();
+builder.Services.AddTransient<DatabaseService>();
 builder.Services.AddTransient<CacheService>();
 
 builder.Services.AddDistributedMemoryCache();

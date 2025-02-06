@@ -23,76 +23,81 @@ namespace Chapi.Api.Wrappers
             _cache = cache;
         }
 
-        internal async Task CreateItemAsync<T, Dto>(T item, CancellationToken cancellationToken = default) where T : DatabaseCompliantObject<Dto> where Dto : DatabaseDto
+        internal async Task CreateItemAsync<T, TWithId>(T item, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
         {
             cancellationToken.ThrowIfCancellationRequested();
             
-            var response = await _container.CreateItemAsync(item, item.PartitionKey, cancellationToken: cancellationToken);
+            var response = await _container.CreateItemAsync(item.ToCosmosItemWithId(), item.GetPartitionKey(), cancellationToken: cancellationToken);
 
-            await _cache.Create(item.CacheKey(_databaseName, _containerName), item);
+            await _cache.Create(item.GetCacheKey(_databaseName, _containerName), item);
         }
 
-        internal async Task<Dto?> GetItemAsync<T, Dto>(T item, QueryDefinition? query = null, CancellationToken cancellationToken = default) where T : DatabaseCompliantObject<Dto> where Dto : DatabaseDto
+        internal async Task<T?> GetItemAsync<T, TWithId>(T item, QueryDefinition? query = null, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var cacheKey = item.CacheKey(_databaseName, _containerName);
+            var cacheKey = item.GetCacheKey(_databaseName, _containerName);
 
-            var cached = await _cache.Get<Dto>(cacheKey);
+            var cached = await _cache.Get<T>(cacheKey);
             if (cached != null)
             {
                 return cached;
             }
 
-            var foundItem = !string.IsNullOrEmpty(item.Id) && item.PartitionKey != PartitionKey.None
-                ? await _container.ReadItemAsync<Dto>(item.Id, item.PartitionKey, cancellationToken: cancellationToken)
-                : await GetItemWithQueryAsync<T, Dto>(query ?? DefaultQueryDefinition(item.Id), cancellationToken);
+            var foundItem = !string.IsNullOrEmpty(item.GetId()) && item.GetPartitionKey() != PartitionKey.None
+                ? await _container.ReadItemAsync<TWithId>(item.GetId(), item.GetPartitionKey(), cancellationToken: cancellationToken)
+                : await GetItemWithQueryAsync<T, TWithId>(query ?? DefaultQueryDefinition(item.GetId()), cancellationToken);
 
             if (foundItem != null)
             {
-                await _cache.Create(cacheKey, foundItem);
+                item.FromCosmosItemWithId(foundItem);
+                await _cache.Create(cacheKey, item);
+                return item;
             }
 
-            return foundItem;
+            return null;
         }
 
-        internal async Task UpdateItemAsync<T, Dto>(T item, CancellationToken cancellationToken = default) where T : DatabaseCompliantObject<Dto> where Dto : DatabaseDto
+        internal async Task UpdateItemAsync<T, TWithId>(T item, bool hard = false, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var cacheKey = item.CacheKey(_databaseName, _containerName);
+            var changes = item.CreateInstance();
+            CosmosItem<TWithId>.InjectValues(item, changes);
 
-            var existing = await GetItemAsync<T, Dto>(item, cancellationToken: cancellationToken);
+            var cacheKey = item.GetCacheKey(_databaseName, _containerName);
+
+            var existing = await GetItemAsync<T, TWithId>(item, cancellationToken: cancellationToken);
 
             if (existing == null)
             {
-                await CreateItemAsync<T, Dto>(item, cancellationToken);
+                await CreateItemAsync<CosmosItem<TWithId>, TWithId>(item, cancellationToken);
                 return;
             }
 
-            OverrideWithNonNullValues(existing, item);
+            CosmosItem<TWithId>.InjectValues(changes, existing, hard);
 
-            await _container.UpsertItemAsync(item, item.PartitionKey, cancellationToken: cancellationToken);
+            await _container.UpsertItemAsync(existing.ToCosmosItemWithId(), existing.GetPartitionKey(), cancellationToken: cancellationToken);
 
-            await _cache.Create(cacheKey, item);
+            await _cache.Create(cacheKey, existing);
         }
 
-        internal async Task DeleteItemAsync<T, Dto>(T item, CancellationToken cancellationToken = default) where T : DatabaseCompliantObject<Dto> where Dto : DatabaseDto
+        internal async Task DeleteItemAsync<T, TWithId>(T item, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            await _container.DeleteItemAsync<T>(item.Id, item.PartitionKey, cancellationToken: cancellationToken);
+            await _container.DeleteItemAsync<T>(item.GetId(), item.GetPartitionKey(), cancellationToken: cancellationToken);
 
-            await _cache.Remove(item.CacheKey(_databaseName, _containerName));
+            await _cache.Remove(item.GetCacheKey(_databaseName, _containerName));
         }
 
         private QueryDefinition DefaultQueryDefinition(string id) => new QueryDefinition("SELECT * FROM c WHERE c.id = @Id").WithParameter("@Id", id);
 
 
-        private async Task<Dto?> GetItemWithQueryAsync<T, Dto>(QueryDefinition query, CancellationToken cancellationToken)
+        private async Task<TWithId?> GetItemWithQueryAsync<T, TWithId>(QueryDefinition query, CancellationToken cancellationToken) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
         {
-            using var feedIterator = _container.GetItemQueryIterator<Dto>(query);
+            using var feedIterator = _container.GetItemQueryIterator<TWithId>(query);
 
             while (feedIterator.HasMoreResults)
             {
@@ -105,23 +110,6 @@ namespace Chapi.Api.Wrappers
             }
 
             return default;
-        }
-
-        private void OverrideWithNonNullValues<T, Dto>(Dto baseItem, T overridingItem)
-        {
-            if (overridingItem == null)
-            {
-                return;
-            }
-
-            foreach (var prop in typeof(T).GetProperties())
-            {
-                var overridingValue = prop.GetValue(overridingItem);
-                if (overridingValue != null)
-                {
-                    prop.SetValue(baseItem, overridingValue);
-                }
-            }
         }
     }
 }
