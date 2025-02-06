@@ -1,17 +1,17 @@
 ﻿namespace Chapi.Api.Models.Configuration
 {
-    public class UsersConfigDataDto : IConfigData<UsersConfigData>
+    public class GroupsConfigDataDto : IConfigData<GroupsConfigData>
     {
         public string? DatabaseName { get; set; }
         public string? ContainerName { get; set; }
 
-        public UsersConfigData ToValidated()
+        public GroupsConfigData ToValidated()
         {
             if(string.IsNullOrEmpty(DatabaseName)) throw new ArgumentNullException(nameof(DatabaseName));
             if(string.IsNullOrEmpty(ContainerName)) throw new ArgumentNullException(nameof(ContainerName));
 
-            return new UsersConfigData(DatabaseName, ContainerName);
+            return new GroupsConfigData(DatabaseName, ContainerName);
         }
     }
-    public record UsersConfigData(string DatabaseName, string ContainerName);
+    public record GroupsConfigData(string DatabaseName, string ContainerName);
 }

@@ -17,13 +17,13 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpGet("{email}")]
-        public async Task<User?> Get([FromRoute] string email, CancellationToken cancellationToken)
+        public async Task<UserDto?> Get([FromRoute] string email, CancellationToken cancellationToken)
         {
             return await _userService.GetAsync(email, cancellationToken);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] UserCreateDto userDto, CancellationToken cancellationToken)
+        public async Task<IActionResult> Post([FromBody] UserDto userDto, CancellationToken cancellationToken)
         {
 
             await _userService.CreateAsync(new User(userDto), cancellationToken);

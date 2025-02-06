@@ -1,21 +1,14 @@
-﻿using Newtonsoft.Json;
-
-namespace Chapi.Api.Models.Users
+﻿namespace Chapi.Api.Models.Users
 {
-    public class UserCreateDto
+    public class User : DatabaseCompliantObject<UserDto>
     {
         public string? Organization { get; set; }
         public string? Email { get; set; }
         public string? Name { get; set; }
         public string? ProfilePicture { get; set; }
         public UserAccess[]? Access { get; set; }
-    }
 
-    public class User : CosmosDtoBase
-    {
-        public User() {} // For Serialization
-
-        public User(UserCreateDto userDto)
+        public User(UserDto userDto): base(userDto)
         {
             Organization = userDto.Organization;
             Email = userDto.Email;
@@ -24,12 +17,19 @@ namespace Chapi.Api.Models.Users
             Access = userDto.Access;
         }
 
-        [JsonProperty(PropertyName = "organization")]
-        public string? Organization { get; set; }
-        public string? Email { get; set; }
-        public string? Name { get; set; }
-        public string? ProfilePicture { get; set; }
-        public UserAccess[]? Access { get; set; }
+        public User(): base(){}
+
+        public override DatabaseDto ToDatabaseDto()
+        {
+            return new UserDto
+            {
+                Organization = Organization,
+                Email = Email,
+                Name = Name,
+                ProfilePicture = ProfilePicture,
+                Access = Access
+            };
+        }
     }
 
     public class UserAccess
