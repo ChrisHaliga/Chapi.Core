@@ -8,7 +8,7 @@ namespace Chapi.Api.Services.CrudServices
     {
         public GroupService(CrudConfigData<Group> config, IDatabaseService cosmosService) : base(cosmosService, config) { }
 
-        public async Task<Group?> GetGroupByName(string name, CancellationToken cancellationToken)
+        public async Task<RequestDetailObject> GetGroupByName(string name, CancellationToken cancellationToken)
         {
             var user = new Group() { Name = name };
             return await GetItem(user, cancellationToken);

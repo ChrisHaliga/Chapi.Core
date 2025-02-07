@@ -44,16 +44,23 @@ namespace Chapi.Api.Wrappers
                 return cached;
             }
 
-            var foundItem = !string.IsNullOrEmpty(item.GetId()) && item.GetPartitionKey() != PartitionKey.None
-                ? await _container.ReadItemAsync<TWithId>(item.GetId(), item.GetPartitionKey(), cancellationToken: cancellationToken)
-                : await GetItemWithQueryAsync<T, TWithId>(query ?? DefaultQueryDefinition(item.GetId()), cancellationToken);
-
-            if (foundItem != null)
+            try
             {
-                item.FromCosmosItemWithId(foundItem);
-                await _cache.Create(cacheKey, item);
-                return item;
+                var foundItem = !string.IsNullOrEmpty(item.GetId()) && item.GetPartitionKey() != PartitionKey.None
+                                ? await _container.ReadItemAsync<TWithId>(item.GetId(), item.GetPartitionKey(), cancellationToken: cancellationToken)
+                                : await GetItemWithQueryAsync<T, TWithId>(query ?? DefaultQueryDefinition(item.GetId()), cancellationToken);
+
+                if (foundItem != null)
+                {
+                    item.FromCosmosItemWithId(foundItem);
+                    await _cache.Create(cacheKey, item);
+                    return item;
+                }
             }
+            catch(Exception e) //Todo: figure out what exception this is and catch that instead
+            {
+            }
+            
 
             return null;
         }

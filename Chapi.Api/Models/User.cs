@@ -35,7 +35,7 @@
         {
             return new UserWithId();
         }
-    } 
+    }
 
     public class UserWithId : User, DatabaseItemWithId
     {

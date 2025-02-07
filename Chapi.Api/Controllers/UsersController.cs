@@ -35,8 +35,9 @@ namespace Chapi.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] User user, CancellationToken cancellationToken)
         {
-            await UserService.CreateItem(user, cancellationToken);
-            return Ok();
+            var response = await UserService.CreateItem(user, cancellationToken);
+
+            return RequestDetailObject.RequestStatusToActionResult(response);
         }
 
         [HttpPut]

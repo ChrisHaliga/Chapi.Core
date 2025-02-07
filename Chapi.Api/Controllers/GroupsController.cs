@@ -1,9 +1,9 @@
 ﻿using Chapi.Api.Middleware;
 using Chapi.Api.Models.Configuration;
-using Chapi.Api.Models;
 using Chapi.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Chapi.Api.Services.CrudServices;
+using Chapi.Api.Models;
 
 namespace Chapi.Api.Controllers
 {
