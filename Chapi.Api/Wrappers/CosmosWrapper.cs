@@ -23,7 +23,7 @@ namespace Chapi.Api.Wrappers
             _cache = cache;
         }
 
-        internal async Task CreateItemAsync<T, TWithId>(T item, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
+        internal async Task CreateItemAsync<T, TWithId>(T item, CancellationToken cancellationToken = default) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
         {
             cancellationToken.ThrowIfCancellationRequested();
             
@@ -32,9 +32,10 @@ namespace Chapi.Api.Wrappers
             await _cache.Create(item.GetCacheKey(_databaseName, _containerName), item);
         }
 
-        internal async Task<T?> GetItemAsync<T, TWithId>(T item, QueryDefinition? query = null, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
+        internal async Task<T?> GetItemAsync<T, TWithId>(T item, QueryDefinition? query = null, CancellationToken cancellationToken = default) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
         {
             cancellationToken.ThrowIfCancellationRequested();
+
             var cacheKey = item.GetCacheKey(_databaseName, _containerName);
 
             var cached = await _cache.Get<T>(cacheKey);
@@ -57,12 +58,31 @@ namespace Chapi.Api.Wrappers
             return null;
         }
 
-        internal async Task UpdateItemAsync<T, TWithId>(T item, bool hard = false, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
+        internal async Task<List<TWithId>> GetItemsAsync<T, TWithId>(QueryDefinition query, CancellationToken cancellationToken = default) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var feedIterator = _container.GetItemQueryIterator<TWithId>(query);
+
+            while (feedIterator.HasMoreResults)
+            {
+                var response = await feedIterator.ReadNextAsync(cancellationToken);
+
+                if (response.Resource.Any())
+                {
+                    return response.Resource.ToList();
+                }
+            }
+
+            return new List<TWithId>();
+        }
+
+        internal async Task UpdateItemAsync<T, TWithId>(T item, bool hard = false, CancellationToken cancellationToken = default) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             var changes = item.CreateInstance();
-            CosmosItem<TWithId>.InjectValues(item, changes);
+            DatabaseItem<TWithId>.InjectValues(item, changes);
 
             var cacheKey = item.GetCacheKey(_databaseName, _containerName);
 
@@ -70,18 +90,18 @@ namespace Chapi.Api.Wrappers
 
             if (existing == null)
             {
-                await CreateItemAsync<CosmosItem<TWithId>, TWithId>(item, cancellationToken);
+                await CreateItemAsync<DatabaseItem<TWithId>, TWithId>(item, cancellationToken);
                 return;
             }
 
-            CosmosItem<TWithId>.InjectValues(changes, existing, hard);
+            DatabaseItem<TWithId>.InjectValues(changes, existing, hard);
 
             await _container.UpsertItemAsync(existing.ToCosmosItemWithId(), existing.GetPartitionKey(), cancellationToken: cancellationToken);
 
             await _cache.Create(cacheKey, existing);
         }
 
-        internal async Task DeleteItemAsync<T, TWithId>(T item, CancellationToken cancellationToken = default) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
+        internal async Task DeleteItemAsync<T, TWithId>(T item, CancellationToken cancellationToken = default) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
         {
             if (item == null) throw new ArgumentNullException(nameof(item));
 
@@ -94,22 +114,9 @@ namespace Chapi.Api.Wrappers
 
         private QueryDefinition DefaultQueryDefinition(string id) => new QueryDefinition("SELECT * FROM c WHERE c.id = @Id").WithParameter("@Id", id);
 
-
-        private async Task<TWithId?> GetItemWithQueryAsync<T, TWithId>(QueryDefinition query, CancellationToken cancellationToken) where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
+        private async Task<TWithId?> GetItemWithQueryAsync<T, TWithId>(QueryDefinition query, CancellationToken cancellationToken) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
         {
-            using var feedIterator = _container.GetItemQueryIterator<TWithId>(query);
-
-            while (feedIterator.HasMoreResults)
-            {
-                var response = await feedIterator.ReadNextAsync(cancellationToken);
-
-                if (response.Resource.Any())
-                {
-                    return response.Resource.FirstOrDefault();
-                }
-            }
-
-            return default;
+            return (await GetItemsAsync<T, TWithId>(query, cancellationToken)).FirstOrDefault();
         }
     }
 }

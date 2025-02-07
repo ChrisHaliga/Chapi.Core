@@ -15,7 +15,7 @@
         }
     }
 
-    public class User : CosmosItem<UserWithId>
+    public class User : DatabaseItem<UserWithId>
     {
         public string? Organization { get; set; }
         public string? Email { get; set; }
@@ -35,11 +35,9 @@
         {
             return new UserWithId();
         }
-    }
+    } 
 
-    
-
-    public class UserWithId : User, CosmosItemWithId
+    public class UserWithId : User, DatabaseItemWithId
     {
         public string? Id { get; set; }
     }

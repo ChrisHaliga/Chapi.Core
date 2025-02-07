@@ -2,6 +2,7 @@ using Chapi.Api.Middleware;
 using Chapi.Api.Models.Configuration;
 using Chapi.Api.Models;
 using Chapi.Api.Services;
+using Chapi.Api.Services.CrudServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,9 @@ builder.Services.AddSingleton(new ApiKeyAuthorization(authorizationKey));
 builder.Services.AddTransient<IDatabaseService, DatabaseService>();
 builder.Services.AddTransient<DatabaseService>();
 builder.Services.AddTransient<CacheService>();
+
+builder.Services.AddTransient<UserService>();
+builder.Services.AddTransient<GroupService>();
 
 builder.Services.AddDistributedMemoryCache();
 

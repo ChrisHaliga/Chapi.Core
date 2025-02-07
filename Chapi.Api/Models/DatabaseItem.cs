@@ -3,8 +3,9 @@ using Newtonsoft.Json;
 
 namespace Chapi.Api.Models
 {
-    public abstract class CosmosItem<T> where T : CosmosItemWithId
+    public abstract class DatabaseItem<T> where T : DatabaseItemWithId
     {
+        public DatabaseItem(){}
         internal abstract string? GetPartitionKeyString();
         public abstract string GetId();
 
@@ -47,7 +48,7 @@ namespace Chapi.Api.Models
         }
     }
 
-    public interface CosmosItemWithId
+    public interface DatabaseItemWithId
     {
         [JsonProperty(PropertyName = "id")] // Can probably get rid of this, but unsure
         public string? Id { get; set; }

@@ -1,51 +1,62 @@
 ﻿using Chapi.Api.Middleware;
-using Chapi.Api.Models.Configuration;
 using Chapi.Api.Models;
-using Chapi.Api.Services;
+using Chapi.Api.Services.CrudServices;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Chapi.Api.Controllers
 {
-    public class UsersController : CrudController<User, UserWithId>
+    [ApiKeyAuthorization]
+    [ApiController]
+    [Route("[controller]")]
+    public class UsersController(UserService UserService) : ControllerBase
     {
-        public UsersController(CrudConfigData<User> config, IDatabaseService cosmosService) : base(cosmosService, config) { }
-
-
-        [HttpGet("{email}")]
-        public async Task<IActionResult> Get([FromRoute] string email, CancellationToken cancellationToken)
+        [HttpGet]
+        public async Task<IActionResult> Get([FromQuery] string? email = null, [FromQuery] string? organization = null, CancellationToken cancellationToken = default)
         {
-            var userQuery = new User() { Email = email };
-            
-            var userFound = await GetItem(userQuery, cancellationToken);
+            if (!string.IsNullOrEmpty(email))
+            {
+                return Ok(await UserService.GetUserByEmail(email, cancellationToken));
+            }
 
-            return userFound == null ? NotFound() : Ok(userFound);
+            var usersFound = new List<UserWithId>();
+
+            if (!string.IsNullOrEmpty(organization))
+            {
+                usersFound = await UserService.GetUsersByOrganization(organization, cancellationToken);
+            }
+            else
+            {
+                usersFound = await UserService.GetAllItems();
+            }
+
+            return usersFound.Count() == 0 ? NotFound(usersFound) : Ok(usersFound);
         }
 
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] User user, CancellationToken cancellationToken)
         {
-            await CreateItem(user, cancellationToken);
+            await UserService.CreateItem(user, cancellationToken);
             return Ok();
         }
 
         [HttpPut]
         public async Task<IActionResult> Put([FromBody] User user, CancellationToken cancellationToken)
         {
-            await UpdateItem(user, true, cancellationToken);
+            await UserService.UpdateItem(user, true, cancellationToken);
             return Ok();
         }
 
         [HttpPatch]
         public async Task<IActionResult> Patch([FromBody] User user, CancellationToken cancellationToken)
         {
-            await UpdateItem(user, false, cancellationToken);
+            await UserService.UpdateItem(user, false, cancellationToken);
             return Ok();
         }
 
         [HttpDelete]
         public async Task<IActionResult> Delete([FromBody] UserMinimalDto userMinimal, CancellationToken cancellationToken)
         {
-            await DeleteItem(userMinimal.ToUser(), cancellationToken);
+            await UserService.DeleteUser(userMinimal, cancellationToken);
             return Ok();
         }
     }

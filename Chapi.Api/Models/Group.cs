@@ -14,7 +14,7 @@
             };
         }
     }
-    public class Group : CosmosItem<GroupWithId>
+    public class Group : DatabaseItem<GroupWithId>
     {
         public string? Name { get; set; }
         public string? Description { get; set; }
@@ -30,7 +30,7 @@
         }
     }
 
-    public class GroupWithId : Group, CosmosItemWithId
+    public class GroupWithId : Group, DatabaseItemWithId
     {
         public string? Id { get; set; }
     }

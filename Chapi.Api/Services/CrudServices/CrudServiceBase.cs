@@ -1,21 +1,19 @@
 ﻿using Chapi.Api.Middleware;
 using Chapi.Api.Models;
 using Chapi.Api.Models.Configuration;
-using Chapi.Api.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos;
 
-namespace Chapi.Api.Controllers
+namespace Chapi.Api.Services.CrudServices
 {
-    [ApiKeyAuthorization]
-    [ApiController]
-    [Route("[controller]")]
-    public abstract class CrudController<T, TWithId> : ControllerBase where T : CosmosItem<TWithId> where TWithId : CosmosItemWithId
+
+    public abstract class CrudServiceBase<T, TWithId> where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
     {
         private readonly IDatabaseService _databaseService;
         private readonly string _databaseName;
         private readonly string _containerName;
 
-        public CrudController(IDatabaseService cosmosService, CrudConfigData<T> config)
+        public CrudServiceBase(IDatabaseService cosmosService, CrudConfigData<T> config)
         {
             _databaseService = cosmosService;
             _databaseName = config.DatabaseName;
@@ -25,6 +23,21 @@ namespace Chapi.Api.Controllers
         internal async Task<T?> GetItem(T item, CancellationToken cancellationToken = default)
         {
             return await _databaseService.GetItemAsync<T, TWithId>(item, _databaseName, _containerName, cancellationToken: cancellationToken);
+        }
+
+        internal async Task<List<TWithId>> GetItems(QueryDefinition query, CancellationToken cancellationToken = default)
+        {
+            return await _databaseService.GetItemsAsync<T, TWithId>(_databaseName, _containerName, query, cancellationToken);
+        }
+
+        internal async Task<List<TWithId>> GetItemsByPartitionKey(string partitionKeyName, string partitionKeyValue, CancellationToken cancellationToken = default)
+        {
+            return await GetItems(new QueryDefinition($"SELECT * FROM c WHERE c.{partitionKeyName} = @partitionKey").WithParameter("@partitionKey", partitionKeyValue), cancellationToken);
+        }
+
+        internal async Task<List<TWithId>> GetAllItems(CancellationToken cancellationToken = default)
+        {
+            return await GetItems(new QueryDefinition("SELECT * FROM c"), cancellationToken);
         }
 
         internal async Task CreateItem(T item, CancellationToken cancellationToken = default)
