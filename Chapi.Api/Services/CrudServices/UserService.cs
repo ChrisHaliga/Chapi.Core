@@ -1,17 +1,18 @@
 ﻿using Chapi.Api.Models;
 using Chapi.Api.Models.Configuration;
+using Chapi.Api.Services.Database;
 
 namespace Chapi.Api.Services.CrudServices
 {
     public class UserService : CrudServiceBase<User, UserWithId>
     {
         private readonly GroupService _groupService;
-        public UserService(CrudConfigData<User> config, IDatabaseService cosmosService, GroupService groupService) : base(cosmosService, config)
+        public UserService(CrudConfigData<User> config, CosmosConfigData cosmosConfig, CacheService cache, RuntimeInfo runtimeInfo, GroupService groupService) : base(config, cosmosConfig, cache, runtimeInfo)
         {
             _groupService = groupService;
         }
 
-        public async Task<RequestDetailObject> GetUserByEmail(string email, CancellationToken cancellationToken)
+        public async Task<User> GetUserByEmail(string email, CancellationToken cancellationToken)
         {
             var userQuery = new User() { Email = email };
 
@@ -20,7 +21,8 @@ namespace Chapi.Api.Services.CrudServices
 
         public async Task<List<UserWithId>> GetUsersByOrganization(string organization, CancellationToken cancellationToken)
         {
-            return await GetItemsByPartitionKey("organization", organization, cancellationToken);
+            var keyValuePair = new KeyValuePair<string, string>("organization", organization);
+            return await GetItemsWhereKeyIsValue(keyValuePair, cancellationToken);
         }
 
         public async Task DeleteUser(UserMinimalDto userMinimal, CancellationToken cancellationToken)
@@ -28,7 +30,7 @@ namespace Chapi.Api.Services.CrudServices
             await DeleteItem(userMinimal.ToUser(), cancellationToken);
         }
 
-        internal override async Task<RequestDetailObject> CreateItem(User item, CancellationToken cancellationToken = default)
+        internal override async Task<User> CreateItem(User item, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(item.Email) || string.IsNullOrEmpty(item.Organization))
             {
@@ -37,14 +39,7 @@ namespace Chapi.Api.Services.CrudServices
 
             var existingGroup = await _groupService.GetGroupByName(item.Organization, cancellationToken);
 
-            if(existingGroup.Status != RequestStatus.Success)
-            {
-                return existingGroup;
-            }
-
-            await CreateItem(item, cancellationToken);
-
-            return RequestDetails.Success(item);
+            return await CreateItem(item, cancellationToken);
         }
     }
 }

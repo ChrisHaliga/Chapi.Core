@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using Chapi.Api.Services.Database;
 
 namespace Chapi.Api.Models.Configuration
 {
@@ -13,5 +13,5 @@ namespace Chapi.Api.Models.Configuration
             return new CosmosConfigData(CosmosDbUri);
         }
     }
-    internal record CosmosConfigData(string CosmosDbUri);
+    public record CosmosConfigData(string CosmosDbUri);
 }

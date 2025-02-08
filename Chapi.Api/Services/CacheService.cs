@@ -20,7 +20,7 @@ namespace Chapi.Api.Services
             SlidingExpiration = TimeSpan.FromHours(1)
         };
 
-        public async Task Create<T>(string key, T value, DistributedCacheEntryOptions? distributedCacheEntryOptions = null, CancellationToken cancellationToken = default)
+        public async Task Create(string key, object value, DistributedCacheEntryOptions? distributedCacheEntryOptions = null, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 

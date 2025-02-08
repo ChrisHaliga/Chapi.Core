@@ -3,6 +3,8 @@ using Chapi.Api.Models.Configuration;
 using Chapi.Api.Services;
 using Chapi.Api.Services.CrudServices;
 using Chapi.Api.Models;
+using Microsoft.Extensions.DependencyInjection;
+using Chapi.Api.Services.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,9 +19,8 @@ CrudConfigDataDto<Group>.AddSingleton(builder, "GroupsConfigData");
 var authorizationKey = builder.Configuration.GetValue<string>("AuthorizationKey");
 if (string.IsNullOrEmpty(authorizationKey)) throw new InvalidOperationException("AuthorizationKey data is missing or invalid.");
 builder.Services.AddSingleton(new ApiKeyAuthorization(authorizationKey));
+builder.Services.AddSingleton(new RuntimeInfo(builder.Environment.IsDevelopment()));
 
-builder.Services.AddTransient<IDatabaseService, DatabaseService>();
-builder.Services.AddTransient<DatabaseService>();
 builder.Services.AddTransient<CacheService>();
 
 builder.Services.AddTransient<UserService>();

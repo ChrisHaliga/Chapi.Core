@@ -1,6 +1,8 @@
 ﻿using Chapi.Api.Models;
 using Chapi.Api.Models.Configuration;
-using Microsoft.Azure.Cosmos;
+using Chapi.Api.Models.Exceptions.Common;
+using Chapi.Api.Services.Database;
+using System.Collections.Generic;
 
 namespace Chapi.Api.Services.CrudServices
 {
@@ -8,66 +10,70 @@ namespace Chapi.Api.Services.CrudServices
     public abstract class CrudServiceBase<T, TWithId> where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
     {
         private readonly IDatabaseService _databaseService;
-        private readonly string _databaseName;
-        private readonly string _containerName;
 
-        public CrudServiceBase(IDatabaseService cosmosService, CrudConfigData<T> config)
+        public CrudServiceBase(CrudConfigData<T> crudConfig, CosmosConfigData cosmosConfig, CacheService cache, RuntimeInfo runtimeInfo)
         {
-            _databaseService = cosmosService;
-            _databaseName = config.DatabaseName;
-            _containerName = config.ContainerName;
-        }
+            _databaseService = new CosmosDatabaseService(cosmosConfig, cache, runtimeInfo, crudConfig.DatabaseName, crudConfig.ContainerName);        }
 
-        internal virtual async Task<RequestDetailObject> GetItem(T item, CancellationToken cancellationToken = default)
+        internal virtual async Task<T> GetItem(T item, CancellationToken cancellationToken = default)
         {
-            var response = await _databaseService.GetItemAsync<T, TWithId>(item, _databaseName, _containerName, cancellationToken: cancellationToken);
+            var foundItem = await _databaseService.GetItemByIdAsync<T, TWithId>(item, cancellationToken: cancellationToken);
             
-            if(response == null)
+            if(foundItem == null)
             {
-                return RequestDetails.NotFound();
+                throw new NotFoundException((DatabaseItem<DatabaseItemWithId>)(object)item);
             }
 
-            return RequestDetails.Success(response);
+            return foundItem;
         }
 
-        internal virtual async Task<List<TWithId>> GetItems(QueryDefinition query, CancellationToken cancellationToken = default)
+        internal virtual async Task<List<TWithId>> GetItemsWhereKeyIsValue(KeyValuePair<string, string> keyValuePair, CancellationToken cancellationToken = default)
         {
-            return await _databaseService.GetItemsAsync<T, TWithId>(_databaseName, _containerName, query, cancellationToken);
-        }
+            var foundItems = await _databaseService.GetItemsAsync<T, TWithId>(keyValuePair, cancellationToken);
 
-        internal virtual async Task<List<TWithId>> GetItemsByPartitionKey(string partitionKeyName, string partitionKeyValue, CancellationToken cancellationToken = default)
-        {
-            return await GetItems(new QueryDefinition($"SELECT * FROM c WHERE c.{partitionKeyName} = @partitionKey").WithParameter("@partitionKey", partitionKeyValue), cancellationToken);
+            if (foundItems == null || foundItems.Count == 0)
+            {
+                throw new NotFoundException();
+            }
+
+            return foundItems;
         }
 
         internal virtual async Task<List<TWithId>> GetAllItems(CancellationToken cancellationToken = default)
         {
-            return await GetItems(new QueryDefinition("SELECT * FROM c"), cancellationToken);
+            var foundItems = await _databaseService.GetAllItemsAsync<T, TWithId>( cancellationToken);
+
+            if (foundItems == null || foundItems.Count == 0)
+            {
+                throw new NotFoundException();
+            }
+
+            return foundItems;
         }
 
-        internal virtual async Task CreateItem(T item, CancellationToken cancellationToken = default)
+        internal virtual async Task<T> CreateItem(T item, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(item.GetId()) || string.IsNullOrEmpty(item.GetPartitionKeyString()))
             {
-                throw new ArgumentException("Item must have an Id and a partition key");
+                throw new BadRequestException((DatabaseItem<DatabaseItemWithId>)(object)item);
             }
 
-            await _databaseService.CreateItemAsync<T, TWithId>(item, _databaseName, _containerName, cancellationToken);
+            return await _databaseService.CreateItemAsync<T, TWithId>(item, cancellationToken);
         }
 
-        internal virtual async Task UpdateItem(T item, bool hard = false, CancellationToken cancellationToken = default)
+        internal virtual async Task<T> UpdateItem(T item, bool hard = false, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(item.GetId()) || string.IsNullOrEmpty(item.GetPartitionKeyString()))
             {
-                throw new ArgumentException("Item must have an Id and a partition key");
+                throw new BadRequestException((DatabaseItem<DatabaseItemWithId>)(object)item);
             }
 
-            await _databaseService.UpdateItemAsync<T, TWithId>(item, _databaseName, _containerName, hard, cancellationToken);
+            return await _databaseService.UpdateItemAsync<T, TWithId>(item, hard, cancellationToken);
         }
 
         internal virtual async Task DeleteItem(T item, CancellationToken cancellationToken = default)
         {
-            await _databaseService.DeleteItemAsync<T, TWithId>(item, _databaseName, _containerName, cancellationToken);
+            await _databaseService.DeleteItemAsync<T, TWithId>(item, cancellationToken);
         }
     }
 }
