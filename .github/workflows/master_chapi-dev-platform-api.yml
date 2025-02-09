@@ -34,10 +34,38 @@ jobs:
         with:
           name: .net-app
           path: ${{env.DOTNET_ROOT}}/myapp
+  
+  integration-tests:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build tests
+        run: dotnet build Chapi.IntegrationTests --no-restore --configuration Release
+
+      - name: Run Integration Tests
+        run: dotnet test Chapi.IntegrationTests --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: Chapi.IntegrationTests/TestResults/test-results.trx
 
   deploy:
     runs-on: windows-latest
-    needs: build
+    needs: integration-tests
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
