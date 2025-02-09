@@ -42,6 +42,8 @@
     {
         public string? Id { get; set; }
 
+        public UserWithId() { }
+
         public UserWithId(User? user)
         {
             if (user == null) return;

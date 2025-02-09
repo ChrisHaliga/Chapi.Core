@@ -35,6 +35,8 @@ namespace Chapi.Api.Models
     {
         public string? Id { get; set; }
 
+        public GroupWithId() { }
+
         public GroupWithId(Group? group)
         {
             if (group == null) return;

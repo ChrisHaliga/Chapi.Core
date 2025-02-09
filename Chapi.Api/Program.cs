@@ -5,6 +5,7 @@ using Chapi.Api.Services.CrudServices;
 using Chapi.Api.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Chapi.Api.Services.Database;
+using Chapi.Api.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +37,7 @@ builder.Services.AddSwaggerGen(c =>
     c.OperationFilter<ApiKeyAuthorizationFilter>();
 });
 
+BuildValidated.Validate();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

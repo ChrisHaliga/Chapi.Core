@@ -61,6 +61,10 @@ namespace Chapi.Api.Controllers
             {
                 return BadRequest();
             }
+            catch (ConflictException)
+            {
+                return Conflict();
+            }
             catch (Exception)
             {
                 if (RuntimeInfo.IsDevelopment)

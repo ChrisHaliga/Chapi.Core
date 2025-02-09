@@ -1,6 +1,7 @@
 ﻿namespace Chapi.IntegrationTests.Spies
 {
     using Chapi.Api.Services;
+    using Microsoft.AspNetCore.DataProtection.KeyManagement;
     using Microsoft.Extensions.Caching.Distributed;
     using Newtonsoft.Json.Linq;
     using System.Collections.Generic;
@@ -55,6 +56,17 @@
         {
             UpdateHistory(nameof(Remove), key, true, null);
             await _innerCacheService.Remove(key, cancellationToken);
+        }
+
+        public async Task Reset(CancellationToken cancellationToken = default)
+        {
+            foreach (var key in _registry.Keys)
+            {
+                await _innerCacheService.Remove(key, cancellationToken);
+            }
+
+            _registry.Clear();
+            History.Clear();
         }
     }
 }

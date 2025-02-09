@@ -213,7 +213,7 @@ namespace Chapi.Api.Wrappers
                 {
                     if (_runtimeInfo.IsDevelopment)
                     {
-                        throw new BadRequestException(item, e);
+                        throw new NotFoundException(item, e);
                     }
                     throw new NotFoundException(item);
                 }

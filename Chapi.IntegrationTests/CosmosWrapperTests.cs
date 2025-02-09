@@ -3,6 +3,7 @@ using Chapi.Api.Models.Configuration;
 using Chapi.Api.Models.Exceptions.Common;
 using Chapi.Api.Services;
 using Chapi.Api.Wrappers;
+using Chapi.IntegrationTests.Fixtures;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using System.Configuration;

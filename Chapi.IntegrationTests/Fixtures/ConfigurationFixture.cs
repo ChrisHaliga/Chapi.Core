@@ -1,7 +1,7 @@
 ﻿using Chapi.Api.Models.Configuration;
 using Microsoft.Extensions.Configuration;
 
-namespace Chapi.IntegrationTests
+namespace Chapi.IntegrationTests.Fixtures
 {
     public class ConfigurationFixture
     {

@@ -3,6 +3,8 @@ using Chapi.Api.Models;
 using Chapi.Api.Models.Configuration;
 using Chapi.Api.Services;
 using Chapi.Api.Services.CrudServices;
+using Chapi.IntegrationTests.Fixtures;
+using Chapi.IntegrationTests.MemberData;
 using Chapi.IntegrationTests.Spies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
@@ -12,164 +14,117 @@ using static Chapi.Api.Models.User;
 
 namespace Chapi.IntegrationTests
 {
-    public class ControllerTests : IClassFixture<ConfigurationFixture>
+    public class ControllerTests : IClassFixture<ControllerTestsFixture>
     {
-        private readonly IConfiguration _configuration;
-        private readonly ICacheService _cacheSpy;
+        private readonly ControllerTestsFixture _fixture;
+        private IConfiguration _configuration => _fixture.Configuration;
+        private UsersController _usersController => _fixture.UsersController;
+        private GroupsController _groupsController => _fixture.GroupsController;
+        private ICacheService _cacheSpy => _fixture.CacheSpy;
 
-        private readonly UsersController _usersController;
-        private readonly GroupsController _groupsController;
-
-        public ControllerTests(ConfigurationFixture fixture)
+        public ControllerTests(ControllerTestsFixture fixture)
         {
-            _configuration = fixture.Configuration;
-
-            var usersConfigData = GetCrudConfigData<UserWithId>(_configuration, "UsersConfigData");
-            var groupsConfigData = GetCrudConfigData<GroupWithId>(_configuration, "GroupsConfigData");
-
-            var cosmosDbiUri = _configuration.GetSection("CosmosConfigData")["CosmosDbUri"] ?? throw new ArgumentException("Appsetting \"CosmosConfigData:CosmosDbUri\" is missing");
-
-            var services = new ServiceCollection();
-            services.AddDistributedMemoryCache();
-
-            var cache = services.BuildServiceProvider().GetRequiredService<IDistributedCache>();
-            _cacheSpy = new CacheServiceSpy(cache);
-
-            var runtimeInfo = new RuntimeInfo(true);
-
-            var groupService = new GroupService(groupsConfigData, new CosmosConfigData(cosmosDbiUri), _cacheSpy, runtimeInfo);
-            var userService = new UserService(usersConfigData, new CosmosConfigData(cosmosDbiUri), _cacheSpy, runtimeInfo, groupService);
-
-            _usersController = new UsersController(userService, runtimeInfo);
-            _groupsController = new GroupsController(groupService, runtimeInfo);
+            _fixture = fixture;
         }
 
-        private static CrudConfigData<T> GetCrudConfigData<T>(IConfiguration configuration, string configKey)
-        {
-            var configData = configuration.GetSection(configKey).Get<CrudConfigDataDto<T>>();
-            if (configData == null) throw new InvalidOperationException($"configKey data is missing or invalid.");
-            return configData.ToValidated();
-        }
+        public static IEnumerable<object[]> PostUserTestData() => UserMemberData.PostTestData();
+        public static IEnumerable<object?[]> GetUserTestData() => UserMemberData.GetUserTestData();
+        public static IEnumerable<object[]> PutUserTestData() => UserMemberData.PutTestData();
+        public static IEnumerable<object[]> PatchUserTestData() => UserMemberData.PatchTestData();
+        public static IEnumerable<object[]> DeleteUserTestData() => UserMemberData.DeleteTestData();
 
-        private static User _testerMcgee = new User()
-        {
-            Email = "tester_mcgee@chapi-testing.com",
-            Organization = "developers",
-            Name = "Tester McGee",
-            ProfilePicture = "A fine portrait of Mr. Tester McGee",
-            Access =
-            [
-                new UserAccess()
-                {
-                    Application = "Chapi Testing App",
-                    Roles = ["reader", "tester"]
-                }
-            ]
-        };
-
-        public static IEnumerable<object[]> GetTestData()
-        {
-            yield return new object[] {
-                _testerMcgee,
-                typeof(OkObjectResult)
-            };
-            yield return new object[] {
-                new User()
-                {
-                    Email = _testerMcgee.Email,
-                    Organization = _testerMcgee.Organization,
-                },
-                typeof(OkObjectResult)
-            };
-            yield return new object[] {
-                new User()
-                {
-                    Email = string.Empty,
-                    Organization = _testerMcgee.Organization,
-                    Name = _testerMcgee.Name,
-                    ProfilePicture = _testerMcgee.ProfilePicture,
-                    Access = _testerMcgee.Access
-                },
-                typeof(BadRequestResult)
-            };
-            yield return new object[] {
-                new User()
-                {
-                    Email = null,
-                    Organization = _testerMcgee.Organization,
-                    Name = _testerMcgee.Name,
-                    ProfilePicture = _testerMcgee.ProfilePicture,
-                    Access = _testerMcgee.Access
-                },
-                typeof(BadRequestResult)
-            };
-            yield return new object[] {
-                new User()
-                {
-                    Email = _testerMcgee.Email,
-                    Organization = string.Empty,
-                    Name = _testerMcgee.Name,
-                    ProfilePicture = _testerMcgee.ProfilePicture,
-                    Access = _testerMcgee.Access
-                },
-                typeof(BadRequestResult)
-            };
-            yield return new object[] {
-                new User()
-                {
-                    Email = _testerMcgee.Email,
-                    Organization = null,
-                    Name = _testerMcgee.Name,
-                    ProfilePicture = _testerMcgee.ProfilePicture,
-                    Access = _testerMcgee.Access
-                },
-                typeof(BadRequestResult)
-            };
-            yield return new object[] {
-                new User(),
-                typeof(BadRequestResult)
-            };
-            yield return new object[] {
-                new User()
-                {
-                    Email = _testerMcgee.Email,
-                    Organization = "This Organization Does Not Exist",
-                    Name = _testerMcgee.Name,
-                    ProfilePicture = _testerMcgee.ProfilePicture,
-                    Access = _testerMcgee.Access
-                    },
-                typeof(NotFoundResult)
-            };
-
-        }
 
         [Theory]
-        [MemberData(nameof(GetTestData))]
-        public async Task CreateTests(User user, Type expectedResult)
+        [MemberData(nameof(PostUserTestData))]
+        public async Task UserCreateTests(User user, Type expectedResult)
         {
-            IActionResult result;
-
-            using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-
             try
             {
-                result = await _usersController.Post(user, cancellationSource.Token);
+                using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+
+                var result = await _usersController.Post(user, cancellationSource.Token);
                 Assert.IsType(expectedResult, result);
             }
             finally
             {
-                // Always clean up after test execution (pass/fail)
-                await CleanupTestUser(user);
+                await UserMemberData.CleanupAsync(_usersController);
             }
         }
 
-        private async Task CleanupTestUser(User user)
+        [Theory]
+        [MemberData(nameof(GetUserTestData))]
+        public async Task UserGetTests(string? email, string? organization, Type expectedResult)
         {
-            using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            await UserMemberData.SetupAsync(_usersController);
 
-            await _usersController.Delete(
-                new UserMinimalDto { Email = user.Email, Organization = user.Organization },
-                cancellationSource.Token);
+            try
+            {
+                using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+
+                var result = await _usersController.Get(email, organization, cancellationSource.Token);
+                Assert.IsType(expectedResult, result);
+            }
+            finally
+            {
+                await UserMemberData.CleanupAsync(_usersController);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(PutUserTestData))]
+        public async Task UserPutTests(User user, Type expectedResult)
+        {
+            await UserMemberData.SetupAsync(_usersController);
+
+            try
+            {
+                using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+
+                var result = await _usersController.Put(user, cancellationSource.Token);
+                Assert.IsType(expectedResult, result);
+            }
+            finally
+            {
+                await UserMemberData.CleanupAsync(_usersController);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(PatchUserTestData))]
+        public async Task UserPatchTests(User user, Type expectedResult)
+        {
+            await UserMemberData.SetupAsync(_usersController);
+
+            try
+            {
+                using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+
+                var result = await _usersController.Patch(user, cancellationSource.Token);
+                Assert.IsType(expectedResult, result);
+            }
+            finally
+            {
+                await UserMemberData.CleanupAsync(_usersController);
+            }
+        }
+
+        [Theory]
+        [MemberData(nameof(DeleteUserTestData))]
+        public async Task UserDeleteTests(UserMinimalDto userMinimal, Type expectedResult)
+        {
+            await UserMemberData.SetupAsync(_usersController);
+
+            try
+            {
+                using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+
+                var result = await _usersController.Delete(userMinimal, cancellationSource.Token);
+                Assert.IsType(expectedResult, result);
+            }
+            finally
+            {
+                await UserMemberData.CleanupAsync(_usersController);
+            }
         }
     }
 }
