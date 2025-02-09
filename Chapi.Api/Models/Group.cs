@@ -16,15 +16,15 @@ namespace Chapi.Api.Models
             };
         }
     }
-    public class Group : IDatabaseItem
+    public class Group : DatabaseItem
     {
         public string? Name { get; set; }
         public string? Description { get; set; }
         public string? ProfilePicture { get; set; }
         public string? Parent { get; set; }
 
-        public string? GetPartitionKey() => Parent;
-        public string GetId() => Name ?? throw new ArgumentNullException(nameof(Name));
+        public override string? GetPartitionKey() => Parent;
+        protected override string? MapToId() => Name;
         public GroupWithId ToGroupWithId()
         {
             return new GroupWithId(this);

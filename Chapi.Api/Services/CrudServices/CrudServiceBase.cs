@@ -10,12 +10,12 @@ namespace Chapi.Api.Services.CrudServices
     {
         private readonly IDatabaseService _databaseService;
 
-        public CrudServiceBase(CrudConfigData<T> crudConfig, CosmosConfigData cosmosConfig, ICacheService cache, RuntimeInfo runtimeInfo)
+        protected CrudServiceBase(CrudConfigData<T> crudConfig, CosmosConfigData cosmosConfig, ICacheService cache, RuntimeInfo runtimeInfo)
         {
             _databaseService = new CosmosDatabaseService(cosmosConfig, cache, runtimeInfo, crudConfig.DatabaseName, crudConfig.ContainerName);
         }
 
-        internal virtual async Task<T> GetItem(T item, CancellationToken cancellationToken = default)
+        internal async Task<T> GetItem(T item, CancellationToken cancellationToken = default)
         {
             var foundItem = await _databaseService.GetItemByIdAsync<T>(item.GetId(), cancellationToken);
             
@@ -27,7 +27,7 @@ namespace Chapi.Api.Services.CrudServices
             return foundItem;
         }
 
-        internal virtual async Task<List<T>> GetItemsWhereKeyIsValue(KeyValuePair<string, string> keyValuePair, CancellationToken cancellationToken = default)
+        internal async Task<List<T>> GetItemsWhereKeyIsValue(KeyValuePair<string, string> keyValuePair, CancellationToken cancellationToken = default)
         {
             var foundItems = await _databaseService.ListItemsAsync<T>(keyValuePair, cancellationToken);
 
@@ -39,7 +39,7 @@ namespace Chapi.Api.Services.CrudServices
             return foundItems;
         }
 
-        internal virtual async Task<List<T>> GetAllItems(CancellationToken cancellationToken = default)
+        internal async Task<List<T>> GetAllItems(CancellationToken cancellationToken = default)
         {
             var foundItems = await _databaseService.ListAllItemsAsync<T>( cancellationToken);
 
@@ -51,7 +51,7 @@ namespace Chapi.Api.Services.CrudServices
             return foundItems;
         }
 
-        internal virtual async Task<T> CreateItem(T item, CancellationToken cancellationToken = default)
+        protected async Task<T> _CreateItem(T item, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(item.GetId()) || string.IsNullOrEmpty(item.GetPartitionKey()))
             {
@@ -60,8 +60,10 @@ namespace Chapi.Api.Services.CrudServices
 
             return await _databaseService.CreateItemAsync(item, cancellationToken);
         }
+        
+        internal abstract Task<T> CreateItem(T item, CancellationToken cancellationToken = default);
 
-        internal virtual async Task<T> UpdateItem(T item, bool hard = false, CancellationToken cancellationToken = default)
+        internal async Task<T> UpdateItem(T item, bool hard = false, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(item.GetId()) || string.IsNullOrEmpty(item.GetPartitionKey()))
             {
@@ -71,7 +73,7 @@ namespace Chapi.Api.Services.CrudServices
             return await _databaseService.UpdateItemAsync(item, hard, cancellationToken);
         }
 
-        internal virtual async Task DeleteItem(T item, CancellationToken cancellationToken = default)
+        internal async Task DeleteItem(T item, CancellationToken cancellationToken = default)
         {
             await _databaseService.DeleteItemAsync(item, cancellationToken);
         }

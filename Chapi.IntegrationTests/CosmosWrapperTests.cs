@@ -6,6 +6,7 @@ using Chapi.Api.Wrappers;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using System.Configuration;
+using static Chapi.Api.Models.User;
 
 namespace Chapi.IntegrationTests
 {
@@ -40,6 +41,19 @@ namespace Chapi.IntegrationTests
             return configData.ToValidated();
         }
 
+        public UserWithId GenerateTestUser() => new User()
+            {
+                Email = "tester_mcgee@chapi-testing.com",
+                Organization = "developers",
+                Name = "Tester McGee",
+                ProfilePicture = "A fine portrait of Mr. Tester McGee",
+                Access = [new UserAccess()
+                {
+                  Application = "Chapi Testing App",
+                  Roles = ["Admin", "Reader"]
+                }]
+            }.ToUserWithId();
+
         [Fact]
         public async Task CRUD_Selfcleaning_HappyPath()
         {
@@ -60,7 +74,7 @@ namespace Chapi.IntegrationTests
                     createUserResult = await _usersCosmosWrapper.CreateItemAsync(testUser.ToUserWithId(), cancellationSource.Token);
                 }
             }
-            catch(ConflictException e) //Test user was not cleaned up. Instead of failing, try deleting it and try again.
+            catch(ConflictException) //Test user was not cleaned up. Instead of failing, try deleting it and try again.
             {
                 using (var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
                 {

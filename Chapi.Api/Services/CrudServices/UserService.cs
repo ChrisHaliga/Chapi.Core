@@ -1,5 +1,6 @@
 ﻿using Chapi.Api.Models;
 using Chapi.Api.Models.Configuration;
+using Chapi.Api.Models.Exceptions.Common;
 using Chapi.Api.Services.Database;
 
 namespace Chapi.Api.Services.CrudServices
@@ -32,14 +33,14 @@ namespace Chapi.Api.Services.CrudServices
 
         internal override async Task<UserWithId> CreateItem(UserWithId item, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrEmpty(item.Email) || string.IsNullOrEmpty(item.Organization))
+            if (string.IsNullOrEmpty(item.Organization))
             {
-                throw new ArgumentException("Item must have an Id and a partition key");
+                throw new BadRequestException(item);
             }
 
             var existingGroup = await _groupService.GetGroupByName(item.Organization, cancellationToken);
 
-            return await CreateItem(item, cancellationToken);
+            return await _CreateItem(item, cancellationToken);
         }
     }
 }

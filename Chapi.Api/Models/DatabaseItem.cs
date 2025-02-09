@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Cosmos;
+﻿using Chapi.Api.Models.Exceptions.Common;
+using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json;
 using System.Reflection;
 
@@ -14,7 +15,8 @@ namespace Chapi.Api.Models
     {
         public DatabaseItem() { }
         public abstract string? GetPartitionKey();
-        public abstract string GetId();
+        public string GetId() => MapToId() ?? throw new BadRequestException();
+        protected abstract string? MapToId();
     }
 
     public interface IDatabaseItemWithId : IDatabaseItem

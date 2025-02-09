@@ -15,7 +15,7 @@
         }
     }
 
-    public class User : IDatabaseItem
+    public class User : DatabaseItem
     {
         public string? Organization { get; set; }
         public string? Email { get; set; }
@@ -29,8 +29,8 @@
             public string[]? Roles { get; set; }
         }
 
-        public string? GetPartitionKey() => Organization;
-        public string GetId() => Email ?? throw new ArgumentNullException(nameof(Email));
+        public override string? GetPartitionKey() => Organization;
+        protected override string? MapToId() => Email;
 
         public UserWithId ToUserWithId()
         {

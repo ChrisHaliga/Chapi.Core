@@ -33,5 +33,10 @@ namespace Chapi.Api.Services.CrudServices
         {
             await DeleteItem(group, cancellationToken);
         }
+
+        internal override async Task<GroupWithId> CreateItem(GroupWithId item, CancellationToken cancellationToken = default)
+        {
+            return await _CreateItem(item, cancellationToken);
+        }
     }
 }
