@@ -6,19 +6,19 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Chapi.Api.Services.CrudServices
 {
-    public class GroupService : CrudServiceBase<Group, GroupWithId>
+    public class GroupService : CrudServiceBase<GroupWithId>
     {
-        public GroupService(CrudConfigData<Group> config, CosmosConfigData cosmosConfig, CacheService cache, RuntimeInfo runtimeInfo) : base(config, cosmosConfig, cache, runtimeInfo) { }
+        public GroupService(CrudConfigData<GroupWithId> config, CosmosConfigData cosmosConfig, ICacheService cache, RuntimeInfo runtimeInfo) : base(config, cosmosConfig, cache, runtimeInfo) { }
 
-        public async Task<Group> GetGroupByName(string name, CancellationToken cancellationToken)
+        public async Task<GroupWithId> GetGroupByName(string name, CancellationToken cancellationToken)
         {
-            var group = new Group() { Name = name };
+            var group = new Group() { Name = name }.ToGroupWithId();
 
             var foundGroup = await GetItem(group, cancellationToken);
 
             if(foundGroup == null)
             {
-                throw new NotFoundException((DatabaseItem<DatabaseItemWithId>)(object)group);
+                throw new NotFoundException(group);
             }
 
             return foundGroup;
@@ -29,9 +29,9 @@ namespace Chapi.Api.Services.CrudServices
             return await GetItemsWhereKeyIsValue(new KeyValuePair<string, string>("parent", parent), cancellationToken);
         }
 
-        public async Task DeleteGroup(GroupMinimalDto group, CancellationToken cancellationToken)
+        public async Task DeleteGroup(GroupWithId group, CancellationToken cancellationToken)
         {
-            await DeleteItem(group.ToGroup(), cancellationToken);
+            await DeleteItem(group, cancellationToken);
         }
     }
 }

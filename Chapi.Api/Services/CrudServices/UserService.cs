@@ -4,17 +4,17 @@ using Chapi.Api.Services.Database;
 
 namespace Chapi.Api.Services.CrudServices
 {
-    public class UserService : CrudServiceBase<User, UserWithId>
+    public class UserService : CrudServiceBase<UserWithId>
     {
         private readonly GroupService _groupService;
-        public UserService(CrudConfigData<User> config, CosmosConfigData cosmosConfig, CacheService cache, RuntimeInfo runtimeInfo, GroupService groupService) : base(config, cosmosConfig, cache, runtimeInfo)
+        public UserService(CrudConfigData<UserWithId> config, CosmosConfigData cosmosConfig, ICacheService cache, RuntimeInfo runtimeInfo, GroupService groupService) : base(config, cosmosConfig, cache, runtimeInfo)
         {
             _groupService = groupService;
         }
 
         public async Task<User> GetUserByEmail(string email, CancellationToken cancellationToken)
         {
-            var userQuery = new User() { Email = email };
+            var userQuery = new User() { Email = email }.ToUserWithId();
 
             return await GetItem(userQuery, cancellationToken);
         }
@@ -25,12 +25,12 @@ namespace Chapi.Api.Services.CrudServices
             return await GetItemsWhereKeyIsValue(keyValuePair, cancellationToken);
         }
 
-        public async Task DeleteUser(UserMinimalDto userMinimal, CancellationToken cancellationToken)
+        public async Task DeleteUser(UserWithId userMinimal, CancellationToken cancellationToken)
         {
-            await DeleteItem(userMinimal.ToUser(), cancellationToken);
+            await DeleteItem(userMinimal, cancellationToken);
         }
 
-        internal override async Task<User> CreateItem(User item, CancellationToken cancellationToken = default)
+        internal override async Task<UserWithId> CreateItem(UserWithId item, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(item.Email) || string.IsNullOrEmpty(item.Organization))
             {

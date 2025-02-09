@@ -6,20 +6,28 @@ namespace Chapi.Api.Models.Exceptions.Common
     {
         private static readonly string DefaultMessage = "No items found";
 
+        public NotFoundException()
+            : base($"{DefaultMessage}")
+        { }
+
         public NotFoundException(string message)
             : base($"{DefaultMessage}: {message}")
+        { }
+
+        public NotFoundException(string message, Exception inner)
+            : base($"{DefaultMessage}: {message}", inner)
         { }
 
         public NotFoundException(Exception? inner = null)
             : base(DefaultMessage, inner)
         { }
 
-        public NotFoundException(DatabaseItem<DatabaseItemWithId> item)
-            : base($"{DefaultMessage}: {item.GetId()}")
+        public NotFoundException(IDatabaseItem? item)
+            : base($"{DefaultMessage}: {item?.GetId() ?? "null"}")
         { }
 
-        public NotFoundException(DatabaseItem<DatabaseItemWithId> item, Exception inner)
-            : base($"{DefaultMessage}: {item.GetId()}", inner)
+        public NotFoundException(IDatabaseItem? item, Exception inner)
+            : base($"{DefaultMessage}: {item?.GetId() ?? "null"}", inner)
         { }
     }
 }

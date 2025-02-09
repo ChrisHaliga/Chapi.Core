@@ -51,7 +51,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await UserService.CreateItem(user, cancellationToken));
+                return Ok(await UserService.CreateItem(user.ToUserWithId(), cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -77,7 +77,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await UserService.UpdateItem(user, true, cancellationToken));
+                return Ok(await UserService.UpdateItem(user.ToUserWithId(), true, cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -103,7 +103,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await UserService.UpdateItem(user, false, cancellationToken));
+                return Ok(await UserService.UpdateItem(user.ToUserWithId(), false, cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -129,7 +129,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                await UserService.DeleteUser(userMinimal, cancellationToken);
+                await UserService.DeleteUser(userMinimal.ToUser().ToUserWithId(), cancellationToken);
                 return Ok();
             }
             catch (NotFoundException)

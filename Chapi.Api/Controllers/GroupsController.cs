@@ -52,7 +52,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await GroupService.CreateItem(group, cancellationToken));
+                return Ok(await GroupService.CreateItem(group.ToGroupWithId(), cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -78,7 +78,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await GroupService.UpdateItem(group, true, cancellationToken));
+                return Ok(await GroupService.UpdateItem(group.ToGroupWithId(), true, cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -104,7 +104,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await GroupService.UpdateItem(group, false, cancellationToken));
+                return Ok(await GroupService.UpdateItem(group.ToGroupWithId(), false, cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -130,7 +130,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                await GroupService.DeleteItem(group.ToGroup(), cancellationToken);
+                await GroupService.DeleteItem(group.ToGroup().ToGroupWithId(), cancellationToken);
             return Ok();
             }
             catch (NotFoundException)

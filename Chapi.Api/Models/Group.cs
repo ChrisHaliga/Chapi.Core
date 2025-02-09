@@ -1,4 +1,6 @@
-﻿namespace Chapi.Api.Models
+﻿using Microsoft.Azure.Cosmos;
+
+namespace Chapi.Api.Models
 {
     public class GroupMinimalDto
     {
@@ -14,24 +16,34 @@
             };
         }
     }
-    public class Group : DatabaseItem<GroupWithId>
+    public class Group : IDatabaseItem
     {
         public string? Name { get; set; }
         public string? Description { get; set; }
         public string? ProfilePicture { get; set; }
         public string? Parent { get; set; }
 
-        internal override string? GetPartitionKeyString() => Parent;
-        public override string GetId() => Name ?? throw new ArgumentNullException(nameof(Name));
-
-        internal override GroupWithId CreateInstance()
+        public string? GetPartitionKey() => Parent;
+        public string GetId() => Name ?? throw new ArgumentNullException(nameof(Name));
+        public GroupWithId ToGroupWithId()
         {
-            return new GroupWithId();
+            return new GroupWithId(this);
         }
     }
 
-    public class GroupWithId : Group, DatabaseItemWithId
+    public class GroupWithId : Group, IDatabaseItemWithId
     {
         public string? Id { get; set; }
+
+        public GroupWithId(Group? group)
+        {
+            if (group == null) return;
+
+            Name = group.Name;
+            Description = group.Description;
+            ProfilePicture = group.ProfilePicture;
+            Parent = group.Parent;
+            Id = group.GetId();
+        }
     }
 }

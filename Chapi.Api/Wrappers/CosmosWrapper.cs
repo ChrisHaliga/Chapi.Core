@@ -1,23 +1,24 @@
 ﻿using Azure.Identity;
-using Microsoft.Azure.Cosmos;
 using Chapi.Api.Models;
-using Chapi.Api.Services;
-using System.Text.Json;
-using Chapi.Api.Models.Exceptions.Common;
 using Chapi.Api.Models.Configuration;
+using Chapi.Api.Models.Exceptions.Common;
+using Chapi.Api.Services;
+using Chapi.Api.Services.Database;
+using Microsoft.Azure.Cosmos;
+using System.Threading;
 
 namespace Chapi.Api.Wrappers
 {
-    internal class CosmosWrapper
+    public class CosmosWrapper
     {
         private readonly string _databaseName;
         private readonly string _containerName;
-        private readonly CacheService _cache;
+        private readonly ICacheService _cache;
         private readonly CosmosClient _cosmosClient;
         private readonly Container _container;
         private readonly RuntimeInfo _runtimeInfo;
 
-        public CosmosWrapper(string databaseName, string containerName, string CosmosDbUri, CacheService cache, RuntimeInfo runtimeInfo)
+        public CosmosWrapper(string databaseName, string containerName, string CosmosDbUri, ICacheService cache, RuntimeInfo runtimeInfo)
         {
             _databaseName = databaseName;
             _containerName = containerName;
@@ -27,140 +28,220 @@ namespace Chapi.Api.Wrappers
             _runtimeInfo = runtimeInfo;
         }
 
-        internal async Task<T> CreateItemAsync<T, TWithId>(T item, CancellationToken cancellationToken = default) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
+        public async Task<T> CreateItemAsync<T>(T item, CancellationToken cancellationToken = default) where T : IDatabaseItemWithId
         {
             cancellationToken.ThrowIfCancellationRequested();
-            
-            var response = await _container.CreateItemAsync(item.ToCosmosItemWithId(), item.GetPartitionKey(), cancellationToken: cancellationToken);
 
-            await _cache.Create(item.GetCacheKey(_databaseName, _containerName), item);
+            try
+            {
+                await _container.CreateItemAsync<T>(item, new PartitionKey(item.GetPartitionKey()), cancellationToken: cancellationToken);
+            }
+            catch(CosmosException e)
+            {
+                if (e.StatusCode == System.Net.HttpStatusCode.Conflict)
+                {
+                    if(_runtimeInfo.IsDevelopment)
+                    {
+                        throw new ConflictException(item, e);
+                    }
+                    throw new ConflictException(item);
+                }
+
+                throw;
+            }
+
+            await _cache.Create(GetCacheKey(item.Id, _databaseName, _containerName), item);
 
             return item;
         }
 
-        internal async Task<T?> GetItemByIdAsync<T, TWithId>(T item, CancellationToken cancellationToken = default) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
+        public async Task<T?> GetItemByIdAndPartitionKeyAsync<T>(string id, PartitionKey partitionKey, CancellationToken cancellationToken = default) where T : IDatabaseItemWithId
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var id = item.GetId();
-
-            if (string.IsNullOrEmpty(id))
-            {
-                throw new BadRequestException((DatabaseItem<DatabaseItemWithId>)(object)item);
-            }
-
-            var cacheKey = item.GetCacheKey(_databaseName, _containerName);
+            var cacheKey = GetCacheKey(id, _databaseName, _containerName);
             var cached = await _cache.Get<T>(cacheKey);
             if (cached != null)
             {
                 return cached;
             }
 
-            var foundItem = await _container.ReadItemAsync<TWithId>(id, item.GetPartitionKey(), cancellationToken: cancellationToken);
-
-            if (foundItem != null)
+            try
             {
-                item.FromCosmosItemWithId(foundItem);
-                await _cache.Create(cacheKey, item);
-                return item;
+                var foundItem = await _container.ReadItemAsync<T>(id, partitionKey, cancellationToken: cancellationToken);
+                if (foundItem != null)
+                {
+                    await _cache.Create(cacheKey, foundItem);
+                    return foundItem;
+                }
+            }
+            catch(CosmosException e)
+            {
+                if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    if (_runtimeInfo.IsDevelopment)
+                    {
+                        throw new NotFoundException(id, e);
+                    }
+                    throw new NotFoundException(id);
+                }
+
+                throw;
             }
 
-            return null;
+            return default;
         }
 
+        public async Task<T?> GetItemByQueryAsync<T>(QueryDefinition query, CancellationToken cancellationToken = default) where T : IDatabaseItemWithId
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            var foundItem = (await ListItemsAsync<T>(query, cancellationToken)).FirstOrDefault();
 
-        internal async Task<T?> GetItemAsync<T, TWithId>(QueryDefinition query, CancellationToken cancellationToken = default) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
+            if (foundItem == null)
+            {
+                throw new NotFoundException();
+
+            }
+
+            if (!string.IsNullOrEmpty(foundItem.Id))
+            {
+                await _cache.Create(GetCacheKey(foundItem.Id, _databaseName, _containerName), foundItem);
+            }
+
+            return foundItem;
+        }
+
+        public async Task<T?> GetItemAsync<T>(T item, CancellationToken cancellationToken = default) where T : IDatabaseItemWithId
+        {
+            var id = item.GetId();
+            var partitionKey = item.GetPartitionKey();
+
+            if(string.IsNullOrEmpty(id))
+            {
+                throw new BadRequestException(item);
+            }
+
+            if (!string.IsNullOrEmpty(id))
+            {
+                return await GetItemByIdAndPartitionKeyAsync<T>(id, new PartitionKey(partitionKey), cancellationToken);
+            }
+
+            return await GetItemByQueryAsync<T>(new QueryDefinition($"SELECT * FROM c WHERE c.{CosmosDatabaseService.IdKey} = @Id").WithParameter("@Id", item.Id), cancellationToken);
+        }
+
+        public async Task<List<T>> ListItemsAsync<T>(QueryDefinition query, CancellationToken cancellationToken = default) where T : IDatabaseItemWithId
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             try
             {
-                var foundItem = await GetItemWithQueryAsync<T, TWithId>(query, cancellationToken);
+                using var feedIterator = _container.GetItemQueryIterator<T>(query);
 
-                if (foundItem != null)
+                while (feedIterator.HasMoreResults)
                 {
-                    T item = (T)(object)foundItem; // fix this later
+                    var response = await feedIterator.ReadNextAsync(cancellationToken);
 
-                    var cacheKey = item.GetCacheKey(_databaseName, _containerName);
-
-                    item.FromCosmosItemWithId(foundItem);
-                    await _cache.Create(cacheKey, item);
-                    return item;
+                    if (response.Resource.Any())
+                    {
+                        return response.Resource.ToList();
+                    }
                 }
             }
-            catch(Exception e) //Todo: figure out what exception this is and catch that instead
+            catch(CosmosException e)
             {
-                if (_runtimeInfo.IsDevelopment)
+                if (e.StatusCode != System.Net.HttpStatusCode.NotFound)
                 {
-                    throw new NotFoundException(e);
+                    throw; //Not found in list, should just be an empty list, otherwise throw.
                 }
-
-                throw new NotFoundException();
             }
 
-            return null;
+            return new List<T>();
         }
 
-        internal async Task<List<TWithId>> GetItemsAsync<T, TWithId>(QueryDefinition query, CancellationToken cancellationToken = default) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
+        public async Task<T> UpdateItemAsync<T>(T item, bool hard = false, CancellationToken cancellationToken = default) where T : IDatabaseItemWithId
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            using var feedIterator = _container.GetItemQueryIterator<TWithId>(query);
-
-            while (feedIterator.HasMoreResults)
-            {
-                var response = await feedIterator.ReadNextAsync(cancellationToken);
-
-                if (response.Resource.Any())
-                {
-                    return response.Resource.ToList();
-                }
-            }
-
-            return new List<TWithId>();
-        }
-
-        internal async Task<T> UpdateItemAsync<T, TWithId>(T item, bool hard = false, CancellationToken cancellationToken = default) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var changes = item.CreateInstance();
-            DatabaseItem<TWithId>.InjectValues(item, changes);
-
-            var cacheKey = item.GetCacheKey(_databaseName, _containerName);
-
-            var existing = await GetItemByIdAsync<T, TWithId>(item, cancellationToken: cancellationToken);
+            var existing = await GetItemAsync(item, cancellationToken: cancellationToken);
 
             if (existing == null)
             {
-                await CreateItemAsync<DatabaseItem<TWithId>, TWithId>(item, cancellationToken);
+                await CreateItemAsync(item, cancellationToken);
                 return item;
             }
 
-            DatabaseItem<TWithId>.InjectValues(changes, existing, hard);
+            InjectValues(item, existing, hard);
 
-            await _container.UpsertItemAsync(existing.ToCosmosItemWithId(), existing.GetPartitionKey(), cancellationToken: cancellationToken);
+            try
+            {
+                await _container.UpsertItemAsync(existing, new PartitionKey(existing.GetPartitionKey()), cancellationToken: cancellationToken);
+            }
+            catch(CosmosException e)
+            {
+                if(e.StatusCode == System.Net.HttpStatusCode.BadRequest || e.StatusCode == System.Net.HttpStatusCode.Conflict)
+                {
+                    if (_runtimeInfo.IsDevelopment)
+                    {
+                        throw new BadRequestException(item, e);
+                    }
+                    throw new BadRequestException(item);
+                }
 
-            await _cache.Create(cacheKey, existing);
+                throw;
+            }
+            await _cache.Create(GetCacheKey(item.Id, _databaseName, _containerName), existing);
             return existing;
         }
 
-        internal async Task DeleteItemAsync<T, TWithId>(T item, CancellationToken cancellationToken = default) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
+        public async Task DeleteItemAsync<T>(T item, CancellationToken cancellationToken = default) where T : IDatabaseItemWithId
         {
-            if (item == null) throw new ArgumentNullException(nameof(item));
-
             cancellationToken.ThrowIfCancellationRequested();
 
-            await _container.DeleteItemAsync<T>(item.GetId(), item.GetPartitionKey(), cancellationToken: cancellationToken);
+            if (item == null || string.IsNullOrEmpty(item.GetId()) || string.IsNullOrEmpty(item.GetPartitionKey()))
+            {
+                throw new BadRequestException(item);
+            }
 
-            await _cache.Remove(item.GetCacheKey(_databaseName, _containerName));
+            try
+            {
+                await _container.DeleteItemAsync<T>(item.GetId(), new PartitionKey(item.GetPartitionKey()), cancellationToken: cancellationToken);
+            }
+            catch(CosmosException e)
+            {
+                if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    if (_runtimeInfo.IsDevelopment)
+                    {
+                        throw new BadRequestException(item, e);
+                    }
+                    throw new NotFoundException(item);
+                }
+
+                throw;
+            }
+
+            await _cache.Remove(GetCacheKey(item.Id, _databaseName, _containerName));
         }
+
+        private static void InjectValues<T1, T2>(T1 from, T2 to, bool hard = false)
+        {
+            if (from == null || to == null) return;
+
+            var properties = from.GetType().GetProperties();
+
+            foreach (var property in properties)
+            {
+                var value = property.GetValue(from);
+                if (hard || value != null)
+                {
+                    to.GetType().GetProperty(property.Name)?.SetValue(to, value);
+                }
+            }
+        }
+
+        private static string GetCacheKey(string? id, string databaseName, string containerName) => $"{databaseName}-{containerName}-{id}";
 
         private QueryDefinition DefaultQueryDefinition(string id) => new QueryDefinition("SELECT * FROM c WHERE c.id = @Id").WithParameter("@Id", id);
-
-        private async Task<TWithId?> GetItemWithQueryAsync<T, TWithId>(QueryDefinition query, CancellationToken cancellationToken) where T : DatabaseItem<TWithId> where TWithId : DatabaseItemWithId
-        {
-            return (await GetItemsAsync<T, TWithId>(query, cancellationToken)).FirstOrDefault();
-        }
     }
 }

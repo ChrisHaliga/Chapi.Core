@@ -13,15 +13,15 @@ var cosmosConfigData = builder.Configuration.GetSection("CosmosConfigData").Get<
 if(cosmosConfigData == null) throw new InvalidOperationException("CosmosConfig data is missing or invalid.");
 builder.Services.AddSingleton(cosmosConfigData.ToValidated());
 
-CrudConfigDataDto<User>.AddSingleton(builder, "UsersConfigData");
-CrudConfigDataDto<Group>.AddSingleton(builder, "GroupsConfigData");
+CrudConfigDataDto<UserWithId>.AddSingleton(builder, "UsersConfigData");
+CrudConfigDataDto<GroupWithId>.AddSingleton(builder, "GroupsConfigData");
 
 var authorizationKey = builder.Configuration.GetValue<string>("AuthorizationKey");
 if (string.IsNullOrEmpty(authorizationKey)) throw new InvalidOperationException("AuthorizationKey data is missing or invalid.");
 builder.Services.AddSingleton(new ApiKeyAuthorization(authorizationKey));
 builder.Services.AddSingleton(new RuntimeInfo(builder.Environment.IsDevelopment()));
 
-builder.Services.AddTransient<CacheService>();
+builder.Services.AddTransient<ICacheService, CacheService>();
 
 builder.Services.AddTransient<UserService>();
 builder.Services.AddTransient<GroupService>();
