@@ -20,12 +20,12 @@
             : base(DefaultMessage, inner)
         { }
 
-        public BadRequestException(IDatabaseItem? item)
-            : base($"{DefaultMessage}: {item?.GetId() ?? "null"}")
+        public BadRequestException(IDatabaseItem? item, string reason)
+            : base($"{DefaultMessage}: {item?.GetId() ?? "null"} - Reason: {reason}")
         { }
 
-        public BadRequestException(IDatabaseItem? item, Exception inner)
-            : base($"{DefaultMessage}: {item?.GetId() ?? "null"}", inner)
+        public BadRequestException(IDatabaseItem? item, string reason, Exception inner)
+            : base($"{DefaultMessage}: {item?.GetId() ?? "null"} - Reason: {reason}", inner)
         { }
     }
 }

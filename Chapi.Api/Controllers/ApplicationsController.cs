@@ -10,35 +10,34 @@ namespace Chapi.Api.Controllers
     [ApiKeyAuthorization]
     [ApiController]
     [Route("[controller]")]
-    public class GroupsController(GroupService GroupService, RuntimeInfo RuntimeInfo) : ControllerBase
+    public class ApplicationsController(ApplicationService ApplicationService, RuntimeInfo RuntimeInfo) : ControllerBase
     {
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] string? name = null, [FromQuery] string? parent = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Get([FromQuery] string? name = null, [FromQuery] string? platform = null, CancellationToken cancellationToken = default)
         {
             try
             {
                 if (!string.IsNullOrEmpty(name))
                 {
-                    return Ok(await GroupService.GetItemById(name, cancellationToken));
+                    return Ok(await ApplicationService.GetItemById(name, cancellationToken));
                 }
-                if (!string.IsNullOrEmpty(parent))
+                if (!string.IsNullOrEmpty(platform))
                 {
-                    return Ok(await GroupService.GetItemsByPartitionKey(parent, cancellationToken));
+                    return Ok(await ApplicationService.GetItemsByPartitionKey(platform, cancellationToken));
                 }
-
-                return Ok(await GroupService.GetAllItems());
+                return Ok(await ApplicationService.GetAllItems());
             }
             catch (NotFoundException)
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch(BadRequestException)
             {
                 return BadRequest();
             }
-            catch (Exception)
+            catch(Exception)
             {
-                if (RuntimeInfo.IsDevelopment)
+                if(RuntimeInfo.IsDevelopment)
                 {
                     throw;
                 }
@@ -48,11 +47,11 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Group group, CancellationToken cancellationToken)
+        public async Task<IActionResult> Post([FromBody] Application application, CancellationToken cancellationToken)
         {
             try
             {
-                return Ok(await GroupService.CreateItem(new GroupWithId(group), cancellationToken));
+                return Ok(await ApplicationService.CreateItem(new ApplicationWithId(application), cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -61,6 +60,10 @@ namespace Chapi.Api.Controllers
             catch (BadRequestException)
             {
                 return BadRequest();
+            }
+            catch (ConflictException)
+            {
+                return Conflict();
             }
             catch (Exception)
             {
@@ -74,11 +77,11 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> Put([FromBody] Group group, CancellationToken cancellationToken)
+        public async Task<IActionResult> Put([FromBody] Application application, CancellationToken cancellationToken)
         {
             try
             {
-                return Ok(await GroupService.UpdateItem(new GroupWithId(group), true, cancellationToken));
+                return Ok(await ApplicationService.PutItem(new ApplicationWithId(application), cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -100,11 +103,11 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpPatch]
-        public async Task<IActionResult> Patch([FromBody] Group group, CancellationToken cancellationToken)
+        public async Task<IActionResult> Patch([FromBody] Application application, CancellationToken cancellationToken)
         {
             try
             {
-                return Ok(await GroupService.UpdateItem(new GroupWithId(group), false, cancellationToken));
+                return Ok(await ApplicationService.UpdateItem(new ApplicationWithId(application), false, cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -126,12 +129,12 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpDelete]
-        public async Task<IActionResult> Delete([FromBody] GroupMinimalDto group, CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete([FromBody] ApplicationMinimalDto applicationMinimal, CancellationToken cancellationToken)
         {
             try
             {
-                await GroupService.DeleteItem(new GroupWithId(group.ToGroup()), cancellationToken);
-            return Ok();
+                await ApplicationService.DeleteItem(new ApplicationWithId(applicationMinimal.ToApplication()), cancellationToken);
+                return Ok();
             }
             catch (NotFoundException)
             {

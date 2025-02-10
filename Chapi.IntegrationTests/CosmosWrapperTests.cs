@@ -6,7 +6,6 @@ using Chapi.Api.Wrappers;
 using Chapi.IntegrationTests.Fixtures;
 using Microsoft.Extensions.Configuration;
 using Moq;
-using System.Configuration;
 using static Chapi.Api.Models.User;
 
 namespace Chapi.IntegrationTests
@@ -42,19 +41,6 @@ namespace Chapi.IntegrationTests
             return configData.ToValidated();
         }
 
-        public UserWithId GenerateTestUser() => new User()
-            {
-                Email = "tester_mcgee@chapi-testing.com",
-                Organization = "developers",
-                Name = "Tester McGee",
-                ProfilePicture = "A fine portrait of Mr. Tester McGee",
-                Access = [new UserAccess()
-                {
-                  Application = "Chapi Testing App",
-                  Roles = ["Admin", "Reader"]
-                }]
-            }.ToUserWithId();
-
         [Fact]
         public async Task CRUD_Selfcleaning_HappyPath()
         {
@@ -70,21 +56,19 @@ namespace Chapi.IntegrationTests
             UserWithId createUserResult;
             try
             {
-                using (var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
-                {
-                    createUserResult = await _usersCosmosWrapper.CreateItemAsync(testUser.ToUserWithId(), cancellationSource.Token);
-                }
+                using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                createUserResult = await _usersCosmosWrapper.CreateItemAsync(new UserWithId(testUser), cancellationSource.Token);
             }
             catch(ConflictException) //Test user was not cleaned up. Instead of failing, try deleting it and try again.
             {
                 using (var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
                 {
-                    await _usersCosmosWrapper.DeleteItemAsync(testUser.ToUserWithId(), cancellationSource.Token);
+                    await _usersCosmosWrapper.DeleteItemAsync(new UserWithId(testUser), cancellationSource.Token);
                 }
 
                 using (var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
                 {
-                    createUserResult = await _usersCosmosWrapper.CreateItemAsync(testUser.ToUserWithId(), cancellationSource.Token);
+                    createUserResult = await _usersCosmosWrapper.CreateItemAsync(new UserWithId(testUser), cancellationSource.Token);
                 }
             }
 
@@ -97,7 +81,7 @@ namespace Chapi.IntegrationTests
             UserWithId? getUserResult;
             using (var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
             {
-                getUserResult = await _usersCosmosWrapper.GetItemAsync(testUser.ToUserWithId(), cancellationSource.Token);
+                getUserResult = await _usersCosmosWrapper.GetItemAsync(new UserWithId(testUser), cancellationSource.Token);
             }
 
             Assert.NotNull(getUserResult);
@@ -117,14 +101,14 @@ namespace Chapi.IntegrationTests
             UserWithId? updatedUserResult;
             using (var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
             {
-                updatedUserResult = await _usersCosmosWrapper.UpdateItemAsync(updatedUser.ToUserWithId(), false, cancellationSource.Token);
+                updatedUserResult = await _usersCosmosWrapper.UpdateItemAsync(new UserWithId(updatedUser), false, cancellationSource.Token);
             }
 
             Assert.NotNull(updatedUserResult);
 
             using (var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
             {
-                getUserResult = await _usersCosmosWrapper.GetItemAsync(testUser.ToUserWithId(), cancellationSource.Token);
+                getUserResult = await _usersCosmosWrapper.GetItemAsync(new UserWithId(testUser), cancellationSource.Token);
             }
 
             Assert.NotNull(getUserResult);
@@ -140,14 +124,14 @@ namespace Chapi.IntegrationTests
             // Update User Hard
             using (var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
             {
-                updatedUserResult = await _usersCosmosWrapper.UpdateItemAsync(updatedUser.ToUserWithId(), true, cancellationSource.Token);
+                updatedUserResult = await _usersCosmosWrapper.UpdateItemAsync(new UserWithId(updatedUser), true, cancellationSource.Token);
             }
 
             Assert.NotNull(updatedUserResult);
 
             using (var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
             {
-                getUserResult = await _usersCosmosWrapper.GetItemAsync(testUser.ToUserWithId(), cancellationSource.Token);
+                getUserResult = await _usersCosmosWrapper.GetItemAsync(new UserWithId(testUser), cancellationSource.Token);
             }
 
             Assert.NotNull(getUserResult);
@@ -164,15 +148,13 @@ namespace Chapi.IntegrationTests
             // Delete User
             using (var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
             {
-                await _usersCosmosWrapper.DeleteItemAsync(testUser.ToUserWithId(), cancellationSource.Token);
+                await _usersCosmosWrapper.DeleteItemAsync(new UserWithId(testUser), cancellationSource.Token);
             }
 
             try
             {
-                using (var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
-                {
-                    getUserResult = await _usersCosmosWrapper.GetItemAsync(testUser.ToUserWithId(), cancellationSource.Token);
-                }
+                using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                getUserResult = await _usersCosmosWrapper.GetItemAsync(new UserWithId(testUser), cancellationSource.Token);
             }
             catch(Exception e)
             {

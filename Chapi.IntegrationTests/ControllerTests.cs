@@ -1,16 +1,8 @@
 ﻿using Chapi.Api.Controllers;
 using Chapi.Api.Models;
-using Chapi.Api.Models.Configuration;
 using Chapi.Api.Services;
-using Chapi.Api.Services.CrudServices;
-using Chapi.IntegrationTests.Fixtures;
 using Chapi.IntegrationTests.MemberData;
-using Chapi.IntegrationTests.Spies;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using static Chapi.Api.Models.User;
 
 namespace Chapi.IntegrationTests
 {

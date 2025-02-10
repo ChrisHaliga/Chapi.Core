@@ -16,6 +16,8 @@ builder.Services.AddSingleton(cosmosConfigData.ToValidated());
 
 CrudConfigDataDto<UserWithId>.AddSingleton(builder, "UsersConfigData");
 CrudConfigDataDto<GroupWithId>.AddSingleton(builder, "GroupsConfigData");
+CrudConfigDataDto<ApplicationWithId>.AddSingleton(builder, "ApplicationsConfigData");
+
 
 var authorizationKey = builder.Configuration.GetValue<string>("AuthorizationKey");
 if (string.IsNullOrEmpty(authorizationKey)) throw new InvalidOperationException("AuthorizationKey data is missing or invalid.");
@@ -26,6 +28,8 @@ builder.Services.AddTransient<ICacheService, CacheService>();
 
 builder.Services.AddTransient<UserService>();
 builder.Services.AddTransient<GroupService>();
+builder.Services.AddTransient<ApplicationService>();
+
 
 builder.Services.AddDistributedMemoryCache();
 

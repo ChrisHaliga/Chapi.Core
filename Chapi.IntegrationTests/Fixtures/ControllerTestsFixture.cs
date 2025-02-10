@@ -27,8 +27,9 @@ namespace Chapi.IntegrationTests
 
             Configuration = configBuilder.Build();
 
-            var usersConfigData = GetCrudConfigData<UserWithId>(Configuration, "UsersConfigData");
             var groupsConfigData = GetCrudConfigData<GroupWithId>(Configuration, "GroupsConfigData");
+            var applicationsConfigData = GetCrudConfigData<ApplicationWithId>(Configuration, "ApplicationsConfigData");
+            var usersConfigData = GetCrudConfigData<UserWithId>(Configuration, "UsersConfigData");
 
             var cosmosDbiUri = Configuration.GetSection("CosmosConfigData")["CosmosDbUri"] ?? throw new ArgumentException("Appsetting \"CosmosConfigData:CosmosDbUri\" is missing");
 
@@ -41,7 +42,8 @@ namespace Chapi.IntegrationTests
             var runtimeInfo = new RuntimeInfo(true);
 
             var groupService = new GroupService(groupsConfigData, new CosmosConfigData(cosmosDbiUri), CacheSpy, runtimeInfo);
-            var userService = new UserService(usersConfigData, new CosmosConfigData(cosmosDbiUri), CacheSpy, runtimeInfo, groupService);
+            var applicationService = new ApplicationService(applicationsConfigData, new CosmosConfigData(cosmosDbiUri), CacheSpy, runtimeInfo);
+            var userService = new UserService(usersConfigData, new CosmosConfigData(cosmosDbiUri), CacheSpy, runtimeInfo);
 
             UsersController = new UsersController(userService, runtimeInfo);
             GroupsController = new GroupsController(groupService, runtimeInfo);

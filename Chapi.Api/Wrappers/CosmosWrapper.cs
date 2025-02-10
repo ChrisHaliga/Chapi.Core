@@ -50,7 +50,7 @@ namespace Chapi.Api.Wrappers
                 throw;
             }
 
-            await _cache.Create(GetCacheKey(item.Id, _databaseName, _containerName), item);
+            await _cache.Create(GetCacheKey(item.Id, _databaseName, _containerName), item, cancellationToken: cancellationToken);
 
             return item;
         }
@@ -60,7 +60,7 @@ namespace Chapi.Api.Wrappers
             cancellationToken.ThrowIfCancellationRequested();
 
             var cacheKey = GetCacheKey(id, _databaseName, _containerName);
-            var cached = await _cache.Get<T>(cacheKey);
+            var cached = await _cache.Get<T>(cacheKey, cancellationToken: cancellationToken);
             if (cached != null)
             {
                 return cached;
@@ -71,7 +71,7 @@ namespace Chapi.Api.Wrappers
                 var foundItem = await _container.ReadItemAsync<T>(id, partitionKey, cancellationToken: cancellationToken);
                 if (foundItem != null)
                 {
-                    await _cache.Create(cacheKey, foundItem);
+                    await _cache.Create(cacheKey, foundItem, cancellationToken: cancellationToken);
                     return foundItem;
                 }
             }
@@ -119,7 +119,7 @@ namespace Chapi.Api.Wrappers
 
             if(string.IsNullOrEmpty(id))
             {
-                throw new BadRequestException(item);
+                throw new BadRequestException(item, "DatabaseItems must have an Id to be queried individually");
             }
 
             if (!string.IsNullOrEmpty(id))
@@ -183,14 +183,14 @@ namespace Chapi.Api.Wrappers
                 {
                     if (_runtimeInfo.IsDevelopment)
                     {
-                        throw new BadRequestException(item, e);
+                        throw new BadRequestException(item, "Request was bad or there was a conflict", e);
                     }
-                    throw new BadRequestException(item);
+                    throw new BadRequestException(item, "Request was bad or there was a conflict");
                 }
 
                 throw;
             }
-            await _cache.Create(GetCacheKey(item.Id, _databaseName, _containerName), existing);
+            await _cache.Create(GetCacheKey(item.Id, _databaseName, _containerName), existing, cancellationToken: cancellationToken);
             return existing;
         }
 
@@ -198,9 +198,9 @@ namespace Chapi.Api.Wrappers
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (item == null || string.IsNullOrEmpty(item.GetId()) || string.IsNullOrEmpty(item.GetPartitionKey()))
+            if (string.IsNullOrEmpty(item.GetId()) || string.IsNullOrEmpty(item.GetPartitionKey()))
             {
-                throw new BadRequestException(item);
+                throw new BadRequestException(item, "DatabaseItems must have an Id and Partition Key");
             }
 
             try
@@ -241,7 +241,5 @@ namespace Chapi.Api.Wrappers
         }
 
         private static string GetCacheKey(string? id, string databaseName, string containerName) => $"{databaseName}-{containerName}-{id}";
-
-        private QueryDefinition DefaultQueryDefinition(string id) => new QueryDefinition("SELECT * FROM c WHERE c.id = @Id").WithParameter("@Id", id);
     }
 }

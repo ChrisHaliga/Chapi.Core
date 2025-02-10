@@ -19,11 +19,11 @@ namespace Chapi.Api.Controllers
             {
                 if (!string.IsNullOrEmpty(email))
                 {
-                    return Ok(await UserService.GetUserByEmail(email, cancellationToken));
+                    return Ok(await UserService.GetItemById(email, cancellationToken));
                 }
                 if (!string.IsNullOrEmpty(organization))
                 {
-                    return Ok(await UserService.GetUsersByOrganization(organization, cancellationToken));
+                    return Ok(await UserService.GetItemsByPartitionKey(organization, cancellationToken));
                 }
                 return Ok(await UserService.GetAllItems());
             }
@@ -51,7 +51,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await UserService.CreateItem(user.ToUserWithId(), cancellationToken));
+                return Ok(await UserService.CreateItem(new UserWithId(user), cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -81,7 +81,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await UserService.UpdateItem(user.ToUserWithId(), true, cancellationToken));
+                return Ok(await UserService.UpdateItem(new UserWithId(user), true, cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -107,7 +107,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await UserService.UpdateItem(user.ToUserWithId(), false, cancellationToken));
+                return Ok(await UserService.UpdateItem(new UserWithId(user), false, cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -133,7 +133,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                await UserService.DeleteUser(userMinimal.ToUser().ToUserWithId(), cancellationToken);
+                await UserService.DeleteItem(new UserWithId(userMinimal.ToUser()), cancellationToken);
                 return Ok();
             }
             catch (NotFoundException)

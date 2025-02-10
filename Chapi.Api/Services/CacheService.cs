@@ -19,7 +19,7 @@ namespace Chapi.Api.Services
             _cache = cache;
         }
 
-        private static DistributedCacheEntryOptions DefaultDistributedCacheEntryOptions => new DistributedCacheEntryOptions
+        private static DistributedCacheEntryOptions DefaultDistributedCacheEntryOptions => new()
         {
             AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(12),
             SlidingExpiration = TimeSpan.FromHours(1)
@@ -64,7 +64,7 @@ namespace Chapi.Api.Services
             await _cache.RemoveAsync(key, cancellationToken);
         }
 
-        private static readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions
+        private static readonly JsonSerializerOptions jsonSerializerOptions = new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             WriteIndented = false,

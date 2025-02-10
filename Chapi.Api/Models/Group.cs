@@ -18,17 +18,16 @@ namespace Chapi.Api.Models
     }
     public class Group : DatabaseItem
     {
+        public static readonly string OrganizationId = "organizations";
         public string? Name { get; set; }
         public string? Description { get; set; }
         public string? ProfilePicture { get; set; }
         public string? Parent { get; set; }
+        public Dictionary<string, bool> Members { get; set; } = [];
+        public List<ApplicationAccess> Applications { get; set; } = [];
 
         public override string? GetPartitionKey() => Parent;
         protected override string? MapToId() => Name;
-        public GroupWithId ToGroupWithId()
-        {
-            return new GroupWithId(this);
-        }
     }
 
     public class GroupWithId : Group, IDatabaseItemWithId

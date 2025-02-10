@@ -8,17 +8,17 @@ namespace Chapi.IntegrationTests.MemberData
 {
     public static class UserMemberData
     {
-        public static User DefaultTestUser => new User()
+        public static User DefaultTestUser => new()
         {
             Email = "tester_mcgee@chapi-testing.com",
-            Organization = "developers",
+            Organization = "testers",
             Name = "Tester McGee",
             ProfilePicture = "A fine portrait of Mr. Tester McGee",
-            Access =
+            Applications =
             [
-                new UserAccess()
+                new ApplicationAccess()
                 {
-                    Application = "Chapi Testing App",
+                    Name = "Chapi Testing App",
                     Roles = ["reader", "tester"]
                 }
             ]
@@ -69,7 +69,7 @@ namespace Chapi.IntegrationTests.MemberData
                     Organization = _defaultTestUser.Organization,
                     Name = _defaultTestUser.Name,
                     ProfilePicture = _defaultTestUser.ProfilePicture,
-                    Access = _defaultTestUser.Access
+                    Applications = _defaultTestUser.Applications
                 },
                 typeof(BadRequestResult)
             };
@@ -80,7 +80,7 @@ namespace Chapi.IntegrationTests.MemberData
                     Organization = _defaultTestUser.Organization,
                     Name = _defaultTestUser.Name,
                     ProfilePicture = _defaultTestUser.ProfilePicture,
-                    Access = _defaultTestUser.Access
+                    Applications = _defaultTestUser.Applications
                 },
                 typeof(BadRequestResult)
             };
@@ -91,7 +91,7 @@ namespace Chapi.IntegrationTests.MemberData
                     Organization = string.Empty,
                     Name = _defaultTestUser.Name,
                     ProfilePicture = _defaultTestUser.ProfilePicture,
-                    Access = _defaultTestUser.Access
+                    Applications = _defaultTestUser.Applications
                 },
                 typeof(BadRequestResult)
             };
@@ -102,7 +102,7 @@ namespace Chapi.IntegrationTests.MemberData
                     Organization = null,
                     Name = _defaultTestUser.Name,
                     ProfilePicture = _defaultTestUser.ProfilePicture,
-                    Access = _defaultTestUser.Access
+                    Applications = _defaultTestUser.Applications
                 },
                 typeof(BadRequestResult)
             };
@@ -117,7 +117,7 @@ namespace Chapi.IntegrationTests.MemberData
                     Organization = "This Organization Does Not Exist",
                     Name = _defaultTestUser.Name,
                     ProfilePicture = _defaultTestUser.ProfilePicture,
-                    Access = _defaultTestUser.Access
+                    Applications = _defaultTestUser.Applications
                     },
                 typeof(NotFoundResult)
             };
@@ -153,7 +153,7 @@ namespace Chapi.IntegrationTests.MemberData
             yield return new object?[] {
                 null,
                 "This Organization Does Not Exist",
-                typeof(NotFoundResult)
+                typeof(OkObjectResult) //Ok, but an empty list
             };
             yield return new object?[] {
                 "This Email Does Not Exist",
@@ -175,7 +175,7 @@ namespace Chapi.IntegrationTests.MemberData
                     Organization = _defaultTestUser.Organization,
                     Name = "Updated Name",
                     ProfilePicture = _defaultTestUser.ProfilePicture,
-                    Access = _defaultTestUser.Access
+                    Applications = _defaultTestUser.Applications
                 },
                 typeof(NotFoundResult)
             };
@@ -186,7 +186,7 @@ namespace Chapi.IntegrationTests.MemberData
                     Organization = _defaultTestUser.Organization,
                     Name = _defaultTestUser.Name,
                     ProfilePicture = _defaultTestUser.ProfilePicture,
-                    Access = _defaultTestUser.Access
+                    Applications = _defaultTestUser.Applications
                 },
                 typeof(BadRequestResult)
             };
