@@ -8,15 +8,13 @@ namespace Chapi.Api.Services.CrudServices
 {
     public class ApplicationService : CrudServiceBase<ApplicationWithId>
     {
-        private GroupService _groupService => CrudServiceBroker.GroupService ?? throw new Exception("Broker Service was not ready");
         public ApplicationService(CrudConfigData<ApplicationWithId> config, CosmosConfigData cosmosConfig, ICacheService cache, RuntimeInfo runtimeInfo) : base(config, cosmosConfig, cache, runtimeInfo)
         {
-            CrudServiceBroker.ApplicationService = this;
         }
 
 #region Virtual Overrides
 
-        public override async Task<ApplicationWithId> GetItemById(string name, CancellationToken cancellationToken = default) =>  
+        public override async Task<ApplicationWithId> GetItemById(string? name, CancellationToken cancellationToken = default) =>  
             await _GetItem(new ApplicationWithId(new Application() { Name = name }), cancellationToken);
 
         public override async Task<List<ApplicationWithId>> GetItemsByPartitionKey(string organization, CancellationToken cancellationToken = default) => 

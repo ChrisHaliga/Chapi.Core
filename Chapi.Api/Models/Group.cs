@@ -28,6 +28,24 @@ namespace Chapi.Api.Models
 
         public override string? GetPartitionKey() => Parent;
         protected override string? MapToId() => Name;
+
+        public void AddMember(string id) { Members[id] = true; }
+        public bool RemoveMember(string id, bool hard = false)
+        {
+            if (Members.ContainsKey(id))
+            {
+                if (hard)
+                {
+                    Members.Remove(id);
+                }
+                else
+                {
+                    Members[id] = false;
+                }
+                return true;
+            }
+            return false;
+        }
     }
 
     public class GroupWithId : Group, IDatabaseItemWithId
@@ -35,6 +53,11 @@ namespace Chapi.Api.Models
         public string? Id { get; set; }
 
         public GroupWithId() { }
+
+        public GroupWithId(string? id)
+        {
+            Id = id;
+        }
 
         public GroupWithId(Group? group)
         {

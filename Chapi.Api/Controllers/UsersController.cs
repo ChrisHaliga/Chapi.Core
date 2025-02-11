@@ -2,6 +2,7 @@
 using Chapi.Api.Models;
 using Chapi.Api.Models.Configuration;
 using Chapi.Api.Models.Exceptions.Common;
+using Chapi.Api.Services;
 using Chapi.Api.Services.CrudServices;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,7 +11,7 @@ namespace Chapi.Api.Controllers
     [ApiKeyAuthorization]
     [ApiController]
     [Route("[controller]")]
-    public class UsersController(UserService UserService, RuntimeInfo RuntimeInfo) : ControllerBase
+    public class UsersController(ChapiService ChapiService, RuntimeInfo RuntimeInfo) : ControllerBase
     {
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] string? email = null, [FromQuery] string? organization = null, CancellationToken cancellationToken = default)
@@ -51,7 +52,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await UserService.CreateItem(new UserWithId(user), cancellationToken));
+                return Ok(await ChapiService.CreateUser(new UserWithId(user), cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -133,7 +134,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                await UserService.DeleteItem(new UserWithId(userMinimal.ToUser()), cancellationToken);
+                await ChapiService.DeleteUser(new UserWithId(userMinimal.ToUser()), cancellationToken);
                 return Ok();
             }
             catch (NotFoundException)

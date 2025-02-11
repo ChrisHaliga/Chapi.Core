@@ -34,6 +34,24 @@
             public string? Description { get; set; }
             public List<string> Permissions { get; set; } = [];
         }
+
+        public void AddGroup(string id) { Groups[id] = true; }
+        public bool RemoveGroup(string id, bool hard = false)
+        {
+            if (Groups.ContainsKey(id))
+            {
+                if (hard)
+                {
+                    Groups.Remove(id);
+                }
+                else
+                {
+                    Groups[id] = false;
+                }
+                return true;
+            }
+            return false;
+        }
     }
 
     public class ApplicationAccess
@@ -47,6 +65,11 @@
         public string? Id { get; set; }
 
         public ApplicationWithId() { }
+
+        public ApplicationWithId(string? id)
+        {
+            Id = id;
+        }
 
         public ApplicationWithId(Application? app)
         {

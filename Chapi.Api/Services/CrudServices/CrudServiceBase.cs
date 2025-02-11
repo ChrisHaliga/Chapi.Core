@@ -6,7 +6,7 @@ using Chapi.Api.Services.Database;
 namespace Chapi.Api.Services.CrudServices
 {
 
-    public abstract class CrudServiceBase<T> where T : IDatabaseItemWithId
+    public abstract class CrudServiceBase<T> : ICrudServiceBase<T> where T : IDatabaseItemWithId
     {
         private readonly IDatabaseService _databaseService;
 
@@ -15,10 +15,11 @@ namespace Chapi.Api.Services.CrudServices
             _databaseService = new CosmosDatabaseService(cosmosConfig, cache, runtimeInfo, crudConfig.DatabaseName, crudConfig.ContainerName);
         }
 
+
         public abstract Task<T> GetItemById(string id, CancellationToken cancellationToken = default);
         public abstract Task<List<T>> GetItemsByPartitionKey(string partitionKey, CancellationToken cancellationToken = default);
-
         public virtual async Task<T> GetItem(T item, CancellationToken cancellationToken = default) => await _GetItem(item, cancellationToken);
+        public virtual async Task<T?> GetItemIfExists(T item, CancellationToken cancellationToken = default) => await _GetItemIfExists(item, cancellationToken);
         public virtual async Task<List<T>> GetItemsWhereKeyIsValue(KeyValuePair<string, string> keyValuePair, CancellationToken cancellationToken = default) => await _GetItemsWhereKeyIsValue(keyValuePair, cancellationToken);
         public virtual async Task<List<T>> GetAllItems(CancellationToken cancellationToken = default) => await _GetAllItems(cancellationToken);
         public virtual async Task<T> CreateItem(T item, CancellationToken cancellationToken = default) => await _CreateItem(item, cancellationToken);
@@ -26,7 +27,7 @@ namespace Chapi.Api.Services.CrudServices
         public virtual async Task<T> PutItem(T item, CancellationToken cancellationToken = default) => await _UpdateItem(item, true, cancellationToken);
         public virtual async Task<T> PatchItem(T item, CancellationToken cancellationToken = default) => await _UpdateItem(item, false, cancellationToken);
         public virtual async Task DeleteItem(T item, CancellationToken cancellationToken = default) => await _DeleteItem(item, cancellationToken);
-
+        
         protected async Task<T> _GetItem(T item, CancellationToken cancellationToken = default)
         {
             var foundItem = await _databaseService.GetItemByIdAsync<T>(item.GetId(), cancellationToken);
@@ -34,11 +35,23 @@ namespace Chapi.Api.Services.CrudServices
             return foundItem ?? throw new NotFoundException(item);
         }
 
+        protected async Task<T?> _GetItemIfExists(T item, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await _GetItem(item, cancellationToken);
+            }
+            catch (NotFoundException)
+            {
+                return default;
+            }
+        }
 
-        protected async Task<List<T>> _GetItemsWhereKeyIsValue(KeyValuePair<string, string> keyValuePair, CancellationToken cancellationToken = default) => 
+
+        protected async Task<List<T>> _GetItemsWhereKeyIsValue(KeyValuePair<string, string> keyValuePair, CancellationToken cancellationToken = default) =>
             await _databaseService.ListItemsAsync<T>(keyValuePair, cancellationToken) ?? throw new NotFoundException();
 
-        protected async Task<List<T>> _GetAllItems(CancellationToken cancellationToken = default) => await _databaseService.ListAllItemsAsync<T>( cancellationToken) ?? throw new NotFoundException();
+        protected async Task<List<T>> _GetAllItems(CancellationToken cancellationToken = default) => await _databaseService.ListAllItemsAsync<T>(cancellationToken) ?? throw new NotFoundException();
 
         protected async Task<T> _CreateItem(T item, CancellationToken cancellationToken = default)
         {

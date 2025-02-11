@@ -1,4 +1,6 @@
-﻿namespace Chapi.Api.Models
+﻿using Chapi.Api.Utilities.Extensions;
+
+namespace Chapi.Api.Models
 {
     public class UserMinimalDto
     {
@@ -26,6 +28,9 @@
 
         public override string? GetPartitionKey() => Organization;
         protected override string? MapToId() => Email;
+
+        public void AddGroup(string id) => Groups.AddIfNotExists(id);
+        public bool RemoveGroup(string id) => Groups.Remove(id);
     }
 
     public class UserWithId : User, IDatabaseItemWithId
@@ -33,6 +38,11 @@
         public string? Id { get; set; }
 
         public UserWithId() { }
+
+        public UserWithId(string? id)
+        {
+            Id = id;
+        }
 
         public UserWithId(User? user)
         {
