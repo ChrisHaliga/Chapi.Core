@@ -20,7 +20,7 @@ namespace Chapi.Api.Controllers
             {
                 if (!string.IsNullOrEmpty(email))
                 {
-                    return Ok(await UserService.GetItemById(email, cancellationToken));
+                    return Ok(await ChapiService.GetUser(new UserWithId(email), cancellationToken));
                 }
                 if (!string.IsNullOrEmpty(organization))
                 {

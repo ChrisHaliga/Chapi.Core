@@ -1,4 +1,7 @@
-﻿namespace Chapi.Api.Models
+﻿using Chapi.Api.Utilities.Extensions;
+using static System.Net.Mime.MediaTypeNames;
+
+namespace Chapi.Api.Models
 {
     public class ApplicationMinimalDto
     {
@@ -17,16 +20,24 @@
 
     public class Application : DatabaseItem
     {
-        public string? Name { get; set; }
+        //PartitionKey
         public string? Platform { get; set; }
+        public override string GetPartitionKeyFieldName() => nameof(Platform);
+        public override string? GetPartitionKey() => Platform;
+
+        //Id
+        public string? Name { get; set; }
+        public override string GetIdFieldName() => nameof(Name);
+        protected override string? MapToId() => Name;
+
+
         public string? Description { get; set; }
+        public Dictionary<string, bool> Users { get; set; } = [];
         public Dictionary<string, bool> Groups { get; set; } = [];
         public List<string> Permissions { get; set; } = [];
         public List<Role> Roles { get; set; } = [];
         public object? Data { get; set; }
 
-        protected override string? MapToId() => Name;
-        public override string? GetPartitionKey() => Platform;
 
         public class Role
         {
@@ -35,32 +46,56 @@
             public List<string> Permissions { get; set; } = [];
         }
 
-        public void AddGroup(string id) { Groups[id] = true; }
-        public bool RemoveGroup(string id, bool hard = false)
+        public void SoftOverwrite(Application overwriter)
         {
-            if (Groups.ContainsKey(id))
+            Description = overwriter.Description;
+
+            if (overwriter.Data != null)
             {
-                if (hard)
+                throw new NotImplementedException("Currently cannot soft overwrite data");
+            }
+
+            
+            foreach (var overwriterGroup in overwriter.Groups)
+            {
+                Groups[overwriterGroup.Key] = overwriterGroup.Value;
+            }
+
+            foreach (var overwriterPermission in overwriter.Permissions)
+            {
+                Permissions.AddIfNotExists(overwriterPermission);
+            }
+
+            foreach(var overwriterRole in overwriter.Roles)
+            {
+                var currentRole = Roles.Find(x => x.Name == overwriterRole.Name);
+                if (currentRole != null)
                 {
-                    Groups.Remove(id);
+                    currentRole.Description = overwriterRole.Description ?? currentRole.Description;
+
+                    foreach (var overwriterPermission in overwriterRole.Permissions)
+                    {
+                        if (!currentRole.Permissions.Contains(overwriterPermission))
+                        {
+                            currentRole.Permissions.Add(overwriterPermission);
+                        }
+                    }
                 }
                 else
                 {
-                    Groups[id] = false;
+                    Roles.Add(overwriterRole);
                 }
-                return true;
             }
-            return false;
         }
     }
 
     public class ApplicationAccess
     {
         public string? Name { get; set; }
-        public string[] Roles { get; set; } = [];
+        public List<string> Roles { get; set; } = [];
     }
 
-    public class ApplicationWithId : Application, IDatabaseItemWithId
+    public sealed class ApplicationWithId : Application, IDatabaseItemWithId
     {
         public string? Id { get; set; }
 

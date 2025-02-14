@@ -1,4 +1,5 @@
 ﻿using Chapi.Api.Utilities.Extensions;
+using static Chapi.Api.Models.Application;
 
 namespace Chapi.Api.Models
 {
@@ -19,21 +20,56 @@ namespace Chapi.Api.Models
 
     public class User : DatabaseItem
     {
+        public static readonly string DefaultOrganization = "unassigned";
+
+        //PartitionKey
         public string? Organization { get; set; }
+        public override string GetPartitionKeyFieldName() => nameof(Organization);
+        public override string? GetPartitionKey() => Organization;
+
+
+        //Id
         public string? Email { get; set; }
+        public override string GetIdFieldName() => nameof(Email);
+        protected override string? MapToId() => Email;
+
+
         public string? Name { get; set; }
         public string? ProfilePicture { get; set; }
         public List<ApplicationAccess> Applications { get; set; } = [];
         public List<string> Groups { get; set; } = [];
 
-        public override string? GetPartitionKey() => Organization;
-        protected override string? MapToId() => Email;
 
-        public void AddGroup(string id) => Groups.AddIfNotExists(id);
-        public bool RemoveGroup(string id) => Groups.Remove(id);
+
+        public void SoftOverwrite(User overwriter)
+        {
+            Name = overwriter.Name ?? Name;
+            ProfilePicture = overwriter.ProfilePicture ?? ProfilePicture;
+
+            foreach (var application in overwriter.Applications)
+            {
+                var currentApplication = Applications.Find(x => x.Name == application.Name);
+                if (currentApplication != null)
+                {
+                    foreach (var role in currentApplication.Roles)
+                    {
+                        currentApplication.Roles.AddIfNotExists(role);
+                    }
+                }
+                else
+                {
+                    Applications.Add(application);
+                }
+            }
+
+            foreach(var group in overwriter.Groups)
+            {
+                Groups.AddIfNotExists(group);
+            }
+        }
     }
 
-    public class UserWithId : User, IDatabaseItemWithId
+    public sealed class UserWithId : User, IDatabaseItemWithId
     {
         public string? Id { get; set; }
 
@@ -53,6 +89,8 @@ namespace Chapi.Api.Models
             Name = user.Name;
             ProfilePicture = user.ProfilePicture;
             Applications = user.Applications;
+            Groups = user.Groups;
+
             Id = user.GetId();
         }
     }
