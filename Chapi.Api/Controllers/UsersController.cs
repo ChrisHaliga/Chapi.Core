@@ -24,17 +24,17 @@ namespace Chapi.Api.Controllers
                 }
                 if (!string.IsNullOrEmpty(organization))
                 {
-                    return Ok(await UserService.GetItemsByPartitionKey(organization, cancellationToken));
+                    return Ok(await ChapiService.GetUsersByOrganization(organization, cancellationToken));
                 }
-                return Ok(await UserService.GetAllItems());
+                return Ok(await ChapiService.GetAllUsers(cancellationToken));
             }
             catch (NotFoundException)
             {
                 return NotFound();
             }
-            catch(BadRequestException)
+            catch(BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch(Exception)
             {
@@ -58,9 +58,9 @@ namespace Chapi.Api.Controllers
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (ConflictException)
             {
@@ -82,15 +82,15 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await UserService.UpdateItem(new UserWithId(user), true, cancellationToken));
+                return Ok(await ChapiService.PutUser(new UserWithId(user), cancellationToken));
             }
             catch (NotFoundException)
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (Exception)
             {
@@ -108,15 +108,15 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await UserService.UpdateItem(new UserWithId(user), false, cancellationToken));
+                return Ok(await ChapiService.PatchUser(new UserWithId(user), cancellationToken));
             }
             catch (NotFoundException)
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (Exception)
             {
@@ -141,9 +141,9 @@ namespace Chapi.Api.Controllers
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (Exception)
             {

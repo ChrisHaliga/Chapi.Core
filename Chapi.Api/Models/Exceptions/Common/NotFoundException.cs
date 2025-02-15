@@ -22,12 +22,12 @@ namespace Chapi.Api.Models.Exceptions.Common
             : base(DefaultMessage, inner)
         { }
 
-        public NotFoundException(IDatabaseItem? item)
-            : base($"{DefaultMessage}: {item?.GetId() ?? "null"}")
+        public NotFoundException(IDatabaseItem? item, string reason)
+            : base($"{DefaultMessage}: {item?.GetId() ?? "null"} - Reason: {reason}")
         { }
 
-        public NotFoundException(IDatabaseItem? item, Exception inner)
-            : base($"{DefaultMessage}: {item?.GetId() ?? "null"}", inner)
+        public NotFoundException(IDatabaseItem? item, string reason, Exception inner)
+            : base($"{DefaultMessage}: {item?.GetId() ?? "null"} - Reason: {reason}", inner)
         { }
     }
 }

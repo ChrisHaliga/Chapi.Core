@@ -2,6 +2,7 @@
 using Chapi.Api.Models;
 using Chapi.Api.Services;
 using Chapi.IntegrationTests.MemberData;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
 namespace Chapi.IntegrationTests
@@ -30,24 +31,23 @@ namespace Chapi.IntegrationTests
         [MemberData(nameof(PostUserTestData))]
         public async Task UserCreateTests(User user, Type expectedResult)
         {
-            try
-            {
-                using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            await UserMemberData.RemoveTestUser(_usersController);
 
-                var result = await _usersController.Post(user, cancellationSource.Token);
-                Assert.IsType(expectedResult, result);
-            }
-            finally
+            using var cancellationSource = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            if (user.Organization == "This Organization Does Not Exist")
             {
-                await UserMemberData.CleanupAsync(_usersController);
+                Console.Write("");
             }
+            var result = await _usersController.Post(user, cancellationSource.Token);
+                
+            Assert.IsType(expectedResult, result);
         }
 
         [Theory]
         [MemberData(nameof(GetUserTestData))]
         public async Task UserGetTests(string? email, string? organization, Type expectedResult)
         {
-            await UserMemberData.SetupAsync(_usersController);
+            await UserMemberData.CreateTestUser(_usersController);
 
             try
             {
@@ -58,7 +58,7 @@ namespace Chapi.IntegrationTests
             }
             finally
             {
-                await UserMemberData.CleanupAsync(_usersController);
+                await UserMemberData.RemoveTestUser(_usersController);
             }
         }
 
@@ -66,7 +66,7 @@ namespace Chapi.IntegrationTests
         [MemberData(nameof(PutUserTestData))]
         public async Task UserPutTests(User user, Type expectedResult)
         {
-            await UserMemberData.SetupAsync(_usersController);
+            await UserMemberData.CreateTestUser(_usersController);
 
             try
             {
@@ -77,7 +77,7 @@ namespace Chapi.IntegrationTests
             }
             finally
             {
-                await UserMemberData.CleanupAsync(_usersController);
+                await UserMemberData.RemoveTestUser(_usersController);
             }
         }
 
@@ -85,7 +85,7 @@ namespace Chapi.IntegrationTests
         [MemberData(nameof(PatchUserTestData))]
         public async Task UserPatchTests(User user, Type expectedResult)
         {
-            await UserMemberData.SetupAsync(_usersController);
+            await UserMemberData.CreateTestUser(_usersController);
 
             try
             {
@@ -96,7 +96,7 @@ namespace Chapi.IntegrationTests
             }
             finally
             {
-                await UserMemberData.CleanupAsync(_usersController);
+                await UserMemberData.RemoveTestUser(_usersController);
             }
         }
 
@@ -104,7 +104,7 @@ namespace Chapi.IntegrationTests
         [MemberData(nameof(DeleteUserTestData))]
         public async Task UserDeleteTests(UserMinimalDto userMinimal, Type expectedResult)
         {
-            await UserMemberData.SetupAsync(_usersController);
+            await UserMemberData.CreateTestUser(_usersController);
 
             try
             {
@@ -115,7 +115,7 @@ namespace Chapi.IntegrationTests
             }
             finally
             {
-                await UserMemberData.CleanupAsync(_usersController);
+                await UserMemberData.RemoveTestUser(_usersController);
             }
         }
     }

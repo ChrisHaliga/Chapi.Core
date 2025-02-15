@@ -1,9 +1,14 @@
 ﻿using Chapi.Api.Models;
 using Chapi.Api.Models.Exceptions.Common;
+using Chapi.Api.Utilities.Extensions;
+using Microsoft.Azure.Cosmos;
+using System.Diagnostics.Metrics;
+using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Chapi.Api.Services
 {
-    sealed partial class ChapiService : IChapiService
+    public sealed partial class ChapiService : IChapiServiceUser
     {
         public async Task<UserWithId> GetUser(UserWithId user, CancellationToken cancellationToken = default)
         {
@@ -15,7 +20,7 @@ namespace Chapi.Api.Services
             return await _userService.GetItemsWhereKeyIsValue(nameof(UserWithId.Organization), organization, cancellationToken);
         }
 
-        public async Task<List<UserWithId>> GetAllUsers(UserWithId user, CancellationToken cancellationToken = default)
+        public async Task<List<UserWithId>> GetAllUsers(CancellationToken cancellationToken = default)
         {
             return await _userService.GetAllItems(cancellationToken);
         }
@@ -52,8 +57,10 @@ namespace Chapi.Api.Services
             return await _userService.UpdateItem(user, hard:true, cancellationToken);
         }
 
-        public async Task DeleteUser(UserWithId user, CancellationToken cancellationToken = default)
+        public async Task DeleteUser(UserWithId userQuery, CancellationToken cancellationToken = default)
         {
+            var user = await _userService.GetItem(userQuery, cancellationToken);
+
             await UpdateUsersRelatedItems(user, null, null, cancellationToken);
             await _userService.DeleteItem(user, cancellationToken);
         }
@@ -70,45 +77,27 @@ namespace Chapi.Api.Services
 
             user.Organization = newOrganization;
 
-            await DeleteUser(user);
-            return await CreateUser(user);
+            await _userService.DeleteItem(user, cancellationToken);
+            return await _userService.CreateItem(user, cancellationToken);
+
         }
 
         public async Task<ChapiData> ValidateUser(UserWithId user, CancellationToken cancellationToken = default)
         {
             var result = new ChapiData();
 
-            foreach (var groupName in user.Groups)
+            if(string.IsNullOrEmpty(user.Email))
             {
-                var existingGroup = await _groupService.GetItemIfExists(new GroupWithId(groupName), cancellationToken);
-
-                if (existingGroup == null)
-                {
-                    throw new BadRequestException(user, $"Group \"{groupName}\" does not exist");
-                }
-
-                result.Groups.Add(existingGroup.GetId(), existingGroup);
+                throw new BadRequestException(user, "User must have an email");
+            }
+            if (string.IsNullOrEmpty(user.Organization))
+            {
+                throw new BadRequestException(user, "User must have an organization");
             }
 
-            foreach (var applicationAccess in user.Applications)
-            {
-                var existingApplication = await _applicationService.GetItemIfExists(new ApplicationWithId(applicationAccess.Name), cancellationToken);
-
-                if (existingApplication == null)
-                {
-                    throw new BadRequestException(user, $"Application \"{applicationAccess.Name}\" does not exist");
-                }
-
-                foreach (var role in applicationAccess.Roles)
-                {
-                    if (existingApplication.Roles.Find(x => x.Name == role) == null)
-                    {
-                        throw new BadRequestException(user, $"Role \"{role}\" for Application \"{applicationAccess.Name}\" does not exist");
-                    }
-                }
-
-                result.Applications.Add(existingApplication.GetId(), existingApplication);
-            }
+            await EnsureOrganizationExists(user, user.Organization, result, cancellationToken);
+            await EnsureGroupsExist(user, user.Groups, result, cancellationToken);
+            await EnsureApplicationsAndRolesExist(user, user.Applications, result, cancellationToken);
 
             return result;
         }
@@ -116,54 +105,108 @@ namespace Chapi.Api.Services
         private async Task UpdateUsersRelatedItems(UserWithId? before, UserWithId? after, ChapiData? validatedData, CancellationToken cancellationToken = default)
         {
             string userId = before?.GetId() ?? after?.GetId() ?? throw new BadRequestException("Updating null to null???");
+            string organization = before?.Organization ?? after?.Organization ?? throw new BadRequestException(before ?? after, "Organization required");
 
-            foreach (var groupId in after?.Groups ?? [])
+            if (before?.Organization != after?.Organization)
             {
-                var group = validatedData?.Groups[groupId] ?? await _groupService.GetItem(new GroupWithId(groupId), cancellationToken);
-                if (!group.Members[userId])
+                if (!string.IsNullOrEmpty(before?.Organization) && !string.IsNullOrEmpty(after?.Organization))
                 {
-                    group.Members[userId] = true;
+                    before = await MigrateUser(before, after.Organization, cancellationToken);
+                }
+
+                if (after?.Organization != null)
+                {
+                    await AddItemToOrganization(validatedData, after?.Organization, userId, AddMemberToGroup, cancellationToken);
+                }
+
+                if (before?.Organization != null)
+                {
+                    await RemoveItemFromOrganization(validatedData, before?.Organization, userId, RemoveMemberFromGroup, cancellationToken);
+                }
+            }
+
+            await UpdateGroups_User(validatedData, before, after, cancellationToken); //TODO - all of these should be like this
+
+            await AddItemToApplications(validatedData, after?.Applications, userId, AddUserToApplication, cancellationToken);
+            await RemoveItemFromApplicationsBeforeChange(validatedData, before?.Applications, after?.Applications, userId, RemoveUserFromApplication, cancellationToken);
+        }
+        private async Task UpdateGroups_User(ChapiData? validatedData, UserWithId? before, UserWithId? after, CancellationToken cancellationToken = default)
+        {
+            if(before == null && after == null) return;
+
+            string id = (before?.GetId() ?? after?.GetId())!;
+            var (removed, added, common) = before != null ? before.Groups.Diff(after?.Groups) : ([], after?.Groups ?? [], []);
+
+            foreach (var groupId in added)
+            {
+                var group = validatedData?.Groups?.TryGetNullable(groupId) ?? await _groupService.GetItem(new GroupWithId(groupId), cancellationToken);
+
+                if (group != null && AddMemberToGroup(group, id))
+                {
                     await _groupService.PatchItem(group, cancellationToken);
                 }
             }
 
-            List<string> groupsToRemove = (after == null ? before?.Groups : before?.Groups.Where(x => !after.Groups.Contains(x)).ToList()) ?? [];
-            foreach (var groupId in groupsToRemove)
+            foreach (var groupId in removed)
             {
-                var group = validatedData?.Groups[groupId] ?? await _groupService.GetItem(new GroupWithId(groupId), cancellationToken);
-                if (group.Members[userId])
+                var group = validatedData?.Groups?.TryGetNullable(groupId) ?? await _groupService.GetItem(new GroupWithId(groupId), cancellationToken);
+
+                if (group != null && (await RemoveMemberFromGroupAsync(group, id, cancellationToken)))
                 {
-                    group.Members.Remove(userId);
                     await _groupService.PatchItem(group, cancellationToken);
                 }
             }
+        }
 
-            foreach (var applicationAccess in after?.Applications ?? [])
+        private bool AddMemberToGroup(GroupWithId group, string id)
+        {
+            if (!group.Members.Contains(id))
             {
-                if (!string.IsNullOrEmpty(applicationAccess.Name))
-                {
-                    var application = validatedData?.Applications[applicationAccess.Name] ?? await _applicationService.GetItem(new ApplicationWithId(applicationAccess.Name), cancellationToken);
-                    if (!application.Users[userId])
-                    {
-                        application.Users[userId] = true;
-                        await _applicationService.PatchItem(application, cancellationToken);
-                    }
-                }
+                group.Members.Add(id);
+                return true;
+            }
+            return false;
+        }
+
+        private bool RemoveMemberFromGroup(GroupWithId group, string id)
+        {
+            if (group.Members.Contains(id))
+            {
+                group.Members.Remove(id);
+                return true;
+            }
+            return false;
+        }
+
+        private async Task<bool> RemoveMemberFromGroupAsync(GroupWithId group, string id, CancellationToken cancellationToken)
+        {
+            if(group.IsOrganization())
+            {
+                await DeleteUser(new UserWithId(id), cancellationToken);
+                return false;
             }
 
-            List<ApplicationAccess> applicationsToRemove = (after == null ? before?.Applications : before?.Applications.Where(x => after.Applications.Find(y => x.Name == y.Name) == null).ToList()) ?? [];
-            foreach (var applicationAccess in applicationsToRemove)
+            return RemoveMemberFromGroup(group, id);
+        }
+
+        private bool AddUserToApplication(ApplicationWithId application, string id)
+        {
+            if (!application.Users.Contains(id))
             {
-                if (!string.IsNullOrEmpty(applicationAccess.Name))
-                {
-                    var application = validatedData?.Applications[applicationAccess.Name] ?? await _applicationService.GetItem(new ApplicationWithId(applicationAccess.Name), cancellationToken);
-                    if (application.Users[userId])
-                    {
-                        application.Users.Remove(userId);
-                        await _applicationService.PatchItem(application, cancellationToken);
-                    }
-                }
+                application.Users.Add(id);
+                return true;
             }
+            return false;
+        }
+
+        private bool RemoveUserFromApplication(ApplicationWithId application, string id)
+        {
+            if (application.Users.Contains(id))
+            {
+                application.Users.Remove(id);
+                return true;
+            }
+            return false;
         }
     }
 }

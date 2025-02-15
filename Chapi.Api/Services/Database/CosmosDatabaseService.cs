@@ -24,18 +24,6 @@ namespace Chapi.Api.Services.Database
             return await _cosmosWrapper.CreateItemAsync(item, cancellationToken);
         }
 
-        public async Task<T?> GetItemByQueryAsync<T>(string key, string value, CancellationToken cancellationToken = default)  where T : IDatabaseItemWithId
-        {
-            if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
-            {
-                throw new BadRequestException("Must provide key value pair");
-            }
-
-            QueryDefinition query = new QueryDefinition($"SELECT * FROM c WHERE c.{key} = @providedkey").WithParameter("@providedkey", value);
-
-            return await _cosmosWrapper.GetItemByQueryAsync<T>(query, cancellationToken);
-        }
-
         public async Task<T?> GetItemAsync<T>(T item, CancellationToken cancellationToken = default)  where T : IDatabaseItemWithId
         {
             return await _cosmosWrapper.GetItemAsync(item, cancellationToken);

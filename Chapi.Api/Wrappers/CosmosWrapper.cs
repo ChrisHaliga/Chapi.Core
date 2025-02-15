@@ -68,7 +68,7 @@ namespace Chapi.Api.Wrappers
 
             try
             {
-                var foundItem = await _container.ReadItemAsync<T>(id, partitionKey, cancellationToken: cancellationToken);
+                var foundItem = (await _container.ReadItemAsync<T>(id, partitionKey, cancellationToken: cancellationToken)).Resource;
                 if (foundItem != null)
                 {
                     await _cache.Create(cacheKey, foundItem, cancellationToken: cancellationToken);
@@ -213,9 +213,9 @@ namespace Chapi.Api.Wrappers
                 {
                     if (_runtimeInfo.IsDevelopment)
                     {
-                        throw new NotFoundException(item, e);
+                        throw new NotFoundException(item, "item not found in cosmos", e);
                     }
-                    throw new NotFoundException(item);
+                    throw new NotFoundException(item, "item not found in cosmos");
                 }
 
                 throw;

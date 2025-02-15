@@ -35,5 +35,37 @@
 
             return false;
         }
+
+        public static (List<string> UniqueToList1, List<string> UniqueToList2, List<string> common) Diff(this List<string> list1, List<string>? list2)
+        {
+            if(list2 == null)
+            {
+                return (list1, [], []);
+            }
+
+            List<string> common = new List<string>();
+            List<string> uniqueToList1 = new List<string>();
+
+            for (var i = 0; i < list1.Count; i++)
+            {
+                bool match = false;
+                for (var j = 0; j < list2.Count; j++)
+                {
+                    if(list1[i] == list2[j])
+                    {
+                        common.Add(list1[i]);
+                        list2.RemoveAt(j);
+                        match = true;
+                        break;
+                    }
+                }
+                if (!match)
+                {
+                    uniqueToList1.Add(list1[i]);
+                }
+            }
+
+            return (uniqueToList1, list2, common);
+        }
     } 
 }

@@ -29,7 +29,7 @@ namespace Chapi.Api.Services.CrudServices
         {
             var foundItem = await _databaseService.GetItemAsync<T>(item, cancellationToken);
 
-            return foundItem ?? throw new NotFoundException(item);
+            return foundItem ?? throw new NotFoundException(item, "item not found in database");
         }
 
         protected async Task<T?> _GetItemIfExists(T item, CancellationToken cancellationToken = default)

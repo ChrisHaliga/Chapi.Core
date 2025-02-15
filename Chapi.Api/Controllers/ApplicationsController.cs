@@ -2,6 +2,7 @@
 using Chapi.Api.Models;
 using Chapi.Api.Models.Configuration;
 using Chapi.Api.Models.Exceptions.Common;
+using Chapi.Api.Services;
 using Chapi.Api.Services.CrudServices;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,7 +11,7 @@ namespace Chapi.Api.Controllers
     [ApiKeyAuthorization]
     [ApiController]
     [Route("[controller]")]
-    public class ApplicationsController(ApplicationService ApplicationService, RuntimeInfo RuntimeInfo) : ControllerBase
+    public class ApplicationsController(ChapiService ChapiService, RuntimeInfo RuntimeInfo) : ControllerBase
     {
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] string? name = null, [FromQuery] string? platform = null, CancellationToken cancellationToken = default)
@@ -19,21 +20,21 @@ namespace Chapi.Api.Controllers
             {
                 if (!string.IsNullOrEmpty(name))
                 {
-                    return Ok(await ApplicationService.GetItemById(name, cancellationToken));
+                    return Ok(await ChapiService.GetApplication(new ApplicationWithId(name), cancellationToken));
                 }
                 if (!string.IsNullOrEmpty(platform))
                 {
-                    return Ok(await ApplicationService.GetItemsByPartitionKey(platform, cancellationToken));
+                    return Ok(await ChapiService.GetApplicationsByPlatform(platform, cancellationToken));
                 }
-                return Ok(await ApplicationService.GetAllItems());
+                return Ok(await ChapiService.GetAllApplications());
             }
             catch (NotFoundException)
             {
                 return NotFound();
             }
-            catch(BadRequestException)
+            catch(BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch(Exception)
             {
@@ -51,15 +52,15 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await ApplicationService.CreateItem(new ApplicationWithId(application), cancellationToken));
+                return Ok(await ChapiService.CreateApplication(new ApplicationWithId(application), cancellationToken));
             }
             catch (NotFoundException)
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (ConflictException)
             {
@@ -81,15 +82,15 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await ApplicationService.PutItem(new ApplicationWithId(application), cancellationToken));
+                return Ok(await ChapiService.PutApplication(new ApplicationWithId(application), cancellationToken));
             }
             catch (NotFoundException)
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (Exception)
             {
@@ -107,15 +108,15 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await ApplicationService.UpdateItem(new ApplicationWithId(application), false, cancellationToken));
+                return Ok(await ChapiService.PatchApplication(new ApplicationWithId(application), cancellationToken));
             }
             catch (NotFoundException)
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (Exception)
             {
@@ -133,16 +134,16 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                await ApplicationService.DeleteItem(new ApplicationWithId(applicationMinimal.ToApplication()), cancellationToken);
+                await ChapiService.DeleteApplication(new ApplicationWithId(applicationMinimal.ToApplication()), cancellationToken);
                 return Ok();
             }
             catch (NotFoundException)
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (Exception)
             {

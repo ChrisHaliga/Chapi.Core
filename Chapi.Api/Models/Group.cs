@@ -1,5 +1,5 @@
-﻿using Chapi.Api.Utilities.Extensions;
-using Microsoft.Azure.Cosmos;
+﻿using Chapi.Api.Models.Exceptions.Common;
+using Chapi.Api.Utilities.Extensions;
 
 namespace Chapi.Api.Models
 {
@@ -19,9 +19,11 @@ namespace Chapi.Api.Models
     }
     public class Group : DatabaseItem
     {
-        public static readonly string RootOrganization = "organizations";
-
         //PartitionKey
+        public static bool IdIsOrganization(string? id) => string.IsNullOrEmpty(id) ? false : id.Split(':') is [var left, var right] && left == right;
+        public static string IdAsOrganization(string id) => $"{id}:{id}";
+
+        public bool IsOrganization() => Name == Organization;
         public string? Organization { get; set; }
         public override string GetPartitionKeyFieldName() => nameof(Organization);
         public override string? GetPartitionKey() => Organization;
@@ -34,7 +36,7 @@ namespace Chapi.Api.Models
         public string? Parent { get; set; }
         public string? Description { get; set; }
         public string? ProfilePicture { get; set; }
-        public Dictionary<string, bool> Members { get; set; } = [];
+        public List<string> Members { get; set; } = [];
         public List<ApplicationAccess> Applications { get; set; } = [];
         public List<string> Children { get; set; } = [];
 
@@ -47,7 +49,7 @@ namespace Chapi.Api.Models
 
             foreach (var member in overwriter.Members)
             {
-                Members[member.Key] = member.Value;
+                Members.AddIfNotExists(member);
             }
 
             foreach (var application in overwriter.Applications)
@@ -80,11 +82,26 @@ namespace Chapi.Api.Models
     {
         public string? Id { get; set; }
 
-        public GroupWithId() { }
+        public GroupWithId(){}
 
-        public GroupWithId(string? id)
+        public GroupWithId(string? id) 
         {
-            Id = id;
+            var idParts = id?.Split(":");
+            if(idParts?.Length != 2)
+            {
+                throw new BadRequestException(this, $"Group initialized with an id that could not be parsed into \"Organization:Name\" \"{id}\"");
+            }
+
+            Organization = idParts[0];
+            Name = idParts[1];
+            Id = GetId();
+        }
+
+        public GroupWithId(string? organization, string? name)
+        {
+            Organization = organization;
+            Name = name;
+            Id = GetId();
         }
 
         public GroupWithId(Group? group)

@@ -14,28 +14,28 @@ namespace Chapi.Api.Controllers
     public class GroupsController(ChapiService ChapiService, RuntimeInfo RuntimeInfo) : ControllerBase
     {
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] string? name = null, [FromQuery] string? parent = null, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Get([FromQuery] string? organization = null, [FromQuery] string? name = null, CancellationToken cancellationToken = default)
         {
             try
             {
-                if (!string.IsNullOrEmpty(name))
+                if (!string.IsNullOrEmpty(organization) && !string.IsNullOrEmpty(name))
                 {
-                    return Ok(await GroupService.GetItemById(name, cancellationToken));
+                    return Ok(await ChapiService.GetGroup(new GroupWithId(organization, name), cancellationToken));
                 }
-                if (!string.IsNullOrEmpty(parent))
+                if (!string.IsNullOrEmpty(organization))
                 {
-                    return Ok(await GroupService.GetItemsByPartitionKey(parent, cancellationToken));
+                    return Ok(await ChapiService.GetGroupsByOrganization(organization, cancellationToken));
                 }
 
-                return Ok(await GroupService.GetAllItems());
+                return Ok(await ChapiService.GetAllGroups());
             }
             catch (NotFoundException)
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (Exception)
             {
@@ -59,9 +59,9 @@ namespace Chapi.Api.Controllers
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (Exception)
             {
@@ -79,15 +79,15 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await GroupService.UpdateItem(new GroupWithId(group), true, cancellationToken));
+                return Ok(await ChapiService.PutGroup(new GroupWithId(group), cancellationToken));
             }
             catch (NotFoundException)
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (Exception)
             {
@@ -105,15 +105,15 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await GroupService.UpdateItem(new GroupWithId(group), false, cancellationToken));
+                return Ok(await ChapiService.PatchGroup(new GroupWithId(group), cancellationToken));
             }
             catch (NotFoundException)
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (Exception)
             {
@@ -138,9 +138,9 @@ namespace Chapi.Api.Controllers
             {
                 return NotFound();
             }
-            catch (BadRequestException)
+            catch (BadRequestException e)
             {
-                return BadRequest();
+                return BadRequest(e.Message);
             }
             catch (Exception)
             {

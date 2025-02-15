@@ -32,8 +32,8 @@ namespace Chapi.Api.Models
 
 
         public string? Description { get; set; }
-        public Dictionary<string, bool> Users { get; set; } = [];
-        public Dictionary<string, bool> Groups { get; set; } = [];
+        public List<string> Users { get; set; } = [];
+        public List<string> GroupsIds { get; set; } = [];
         public List<string> Permissions { get; set; } = [];
         public List<Role> Roles { get; set; } = [];
         public object? Data { get; set; }
@@ -55,10 +55,14 @@ namespace Chapi.Api.Models
                 throw new NotImplementedException("Currently cannot soft overwrite data");
             }
 
-            
-            foreach (var overwriterGroup in overwriter.Groups)
+            foreach (var user in overwriter.Users)
             {
-                Groups[overwriterGroup.Key] = overwriterGroup.Value;
+                Users.AddIfNotExists(user);
+            }
+            
+            foreach (var overwriterGroup in overwriter.GroupsIds)
+            {
+                GroupsIds.AddIfNotExists(overwriterGroup);
             }
 
             foreach (var overwriterPermission in overwriter.Permissions)
@@ -101,9 +105,10 @@ namespace Chapi.Api.Models
 
         public ApplicationWithId() { }
 
-        public ApplicationWithId(string? id)
+        public ApplicationWithId(string? name)
         {
-            Id = id;
+            Name = name;
+            Id = GetId();
         }
 
         public ApplicationWithId(Application? app)
@@ -112,7 +117,7 @@ namespace Chapi.Api.Models
             Name = app.Name;
             Platform = app.Platform;
             Description = app.Description;
-            Groups = app.Groups;
+            GroupsIds = app.GroupsIds;
             Permissions = app.Permissions;
             Roles = app.Roles;
             Data = app.Data;

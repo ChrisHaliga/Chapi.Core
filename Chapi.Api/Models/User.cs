@@ -75,9 +75,10 @@ namespace Chapi.Api.Models
 
         public UserWithId() { }
 
-        public UserWithId(string? id)
+        public UserWithId(string? email)
         {
-            Id = id;
+            Email = email;
+            Id = GetId();
         }
 
         public UserWithId(User? user)
