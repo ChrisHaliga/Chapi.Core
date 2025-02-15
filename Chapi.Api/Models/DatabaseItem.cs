@@ -1,17 +1,16 @@
 ﻿using Chapi.Api.Models.Exceptions;
 using Chapi.Api.Models.Exceptions.Common;
 using Chapi.Api.Utilities;
-using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json;
-using System.IO;
-using System.Reflection;
 
 namespace Chapi.Api.Models
 {
     public interface IDatabaseItem
     {
+        string? GetIdFieldName();
         string GetId();
         string? GetPartitionKey();
+        string GetPartitionKeyFieldName();
     }
 
     public class DatabaseItemBuildValidator: IBuildValidator
@@ -38,9 +37,12 @@ namespace Chapi.Api.Models
 
     public abstract class DatabaseItem : IDatabaseItem
     {
+        public static string TemporaryIdSuffix = "_temporary";
         public abstract string? GetPartitionKey();
+        public abstract string GetPartitionKeyFieldName();
         public string GetId() => MapToId() ?? throw new BadRequestException();
         protected abstract string? MapToId();
+        public abstract string GetIdFieldName();
     }
 
     public interface IDatabaseItemWithId : IDatabaseItem

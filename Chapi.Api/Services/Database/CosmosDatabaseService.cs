@@ -24,36 +24,19 @@ namespace Chapi.Api.Services.Database
             return await _cosmosWrapper.CreateItemAsync(item, cancellationToken);
         }
 
-        public async Task<T?> GetItemByIdAsync<T>(string id, CancellationToken cancellationToken = default) where T : IDatabaseItemWithId
-        {
-            return await GetItemByQueryAsync<T>(new KeyValuePair<string, string>(IdKey, id), cancellationToken);
-        }
-
-        public async Task<T?> GetItemByQueryAsync<T>(KeyValuePair<string, string> keyValuePair, CancellationToken cancellationToken = default)  where T : IDatabaseItemWithId
-        {
-            if (string.IsNullOrEmpty(keyValuePair.Key) || string.IsNullOrEmpty(keyValuePair.Value))
-            {
-                throw new BadRequestException("Must provide key value pair");
-            }
-
-            QueryDefinition query = new QueryDefinition($"SELECT * FROM c WHERE c.{keyValuePair.Key} = @providedkey").WithParameter("@providedkey", keyValuePair.Value);
-
-            return await _cosmosWrapper.GetItemByQueryAsync<T>(query, cancellationToken);
-        }
-
         public async Task<T?> GetItemAsync<T>(T item, CancellationToken cancellationToken = default)  where T : IDatabaseItemWithId
         {
             return await _cosmosWrapper.GetItemAsync(item, cancellationToken);
         }
 
-        public async Task<List<T>> ListItemsAsync<T>(KeyValuePair<string, string> keyValuePair, CancellationToken cancellationToken = default)  where T : IDatabaseItemWithId
+        public async Task<List<T>> ListItemsAsync<T>(string key, string value, CancellationToken cancellationToken = default)  where T : IDatabaseItemWithId
         {
-            if (string.IsNullOrEmpty(keyValuePair.Key) || string.IsNullOrEmpty(keyValuePair.Value))
+            if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(value))
             {
                 throw new BadRequestException("Must provide key value pair");
             }
 
-            var query = new QueryDefinition($"SELECT * FROM c WHERE c.{keyValuePair.Key} = @providedkey").WithParameter("@providedkey", keyValuePair.Value);
+            var query = new QueryDefinition($"SELECT * FROM c WHERE c.{key} = @providedkey").WithParameter("@providedkey", value);
 
             return await _cosmosWrapper.ListItemsAsync<T>(query, cancellationToken);
         }

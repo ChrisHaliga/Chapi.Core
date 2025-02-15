@@ -29,7 +29,7 @@ builder.Services.AddTransient<ICacheService, CacheService>();
 builder.Services.AddTransient<UserService>();
 builder.Services.AddTransient<GroupService>();
 builder.Services.AddTransient<ApplicationService>();
-
+builder.Services.AddTransient<ChapiService>();
 
 builder.Services.AddDistributedMemoryCache();
 

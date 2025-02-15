@@ -16,6 +16,8 @@ namespace Chapi.IntegrationTests
         public IConfiguration Configuration { get; }
         public UsersController UsersController { get; }
         public GroupsController GroupsController { get; }
+        public ApplicationsController ApplicationsController { get; }
+
         public CacheServiceSpy CacheSpy { get; }
 
         public ControllerTestsFixture()
@@ -45,10 +47,11 @@ namespace Chapi.IntegrationTests
             var applicationService = new ApplicationService(applicationsConfigData, new CosmosConfigData(cosmosDbiUri), CacheSpy, runtimeInfo);
             var userService = new UserService(usersConfigData, new CosmosConfigData(cosmosDbiUri), CacheSpy, runtimeInfo);
 
-            UsersController = new UsersController(userService, runtimeInfo);
-            GroupsController = new GroupsController(groupService, runtimeInfo);
+            var chapiService = new ChapiService(userService, groupService, applicationService);
 
-            Task.Run(async () => await UserMemberData.SetupAsync(UsersController));
+            UsersController = new UsersController(chapiService, runtimeInfo);
+            GroupsController = new GroupsController(chapiService, runtimeInfo);
+            ApplicationsController = new ApplicationsController(chapiService, runtimeInfo);
         }
 
         private static CrudConfigData<T> GetCrudConfigData<T>(IConfiguration configuration, string configKey)
@@ -60,7 +63,7 @@ namespace Chapi.IntegrationTests
 
         public void Dispose()
         {
-            Task.Run(async () => await UserMemberData.CleanupAsync(UsersController));
+            Task.Run(async () => await UserMemberData.RemoveTestUser(UsersController));
         }
     }
 }

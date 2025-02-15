@@ -68,7 +68,7 @@ namespace Chapi.Api.Wrappers
 
             try
             {
-                var foundItem = await _container.ReadItemAsync<T>(id, partitionKey, cancellationToken: cancellationToken);
+                var foundItem = (await _container.ReadItemAsync<T>(id, partitionKey, cancellationToken: cancellationToken)).Resource;
                 if (foundItem != null)
                 {
                     await _cache.Create(cacheKey, foundItem, cancellationToken: cancellationToken);
@@ -122,7 +122,7 @@ namespace Chapi.Api.Wrappers
                 throw new BadRequestException(item, "DatabaseItems must have an Id to be queried individually");
             }
 
-            if (!string.IsNullOrEmpty(id))
+            if (!string.IsNullOrEmpty(partitionKey))
             {
                 return await GetItemByIdAndPartitionKeyAsync<T>(id, new PartitionKey(partitionKey), cancellationToken);
             }
@@ -152,7 +152,7 @@ namespace Chapi.Api.Wrappers
             {
                 if (e.StatusCode != System.Net.HttpStatusCode.NotFound)
                 {
-                    throw; //Not found in list, should just be an empty list, otherwise throw.
+                    throw; //Not found should just be an empty list; otherwise throw.
                 }
             }
 
@@ -213,9 +213,9 @@ namespace Chapi.Api.Wrappers
                 {
                     if (_runtimeInfo.IsDevelopment)
                     {
-                        throw new NotFoundException(item, e);
+                        throw new NotFoundException(item, "item not found in cosmos", e);
                     }
-                    throw new NotFoundException(item);
+                    throw new NotFoundException(item, "item not found in cosmos");
                 }
 
                 throw;

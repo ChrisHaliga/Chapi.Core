@@ -26,7 +26,7 @@ namespace Chapi.IntegrationTests.MemberData
 
         private static User _defaultTestUser = DefaultTestUser;
 
-        public static async Task SetupAsync(UsersController controller)
+        public static async Task CreateTestUser(UsersController controller)
         {
             try
             {
@@ -36,7 +36,7 @@ namespace Chapi.IntegrationTests.MemberData
             catch (ConflictException){}
         }
 
-        public static async Task CleanupAsync(UsersController controller)
+        public static async Task RemoveTestUser(UsersController controller)
         {
             try
             {
@@ -71,7 +71,7 @@ namespace Chapi.IntegrationTests.MemberData
                     ProfilePicture = _defaultTestUser.ProfilePicture,
                     Applications = _defaultTestUser.Applications
                 },
-                typeof(BadRequestResult)
+                typeof(BadRequestObjectResult)
             };
             yield return new object[] {
                 new User()
@@ -82,7 +82,7 @@ namespace Chapi.IntegrationTests.MemberData
                     ProfilePicture = _defaultTestUser.ProfilePicture,
                     Applications = _defaultTestUser.Applications
                 },
-                typeof(BadRequestResult)
+                typeof(BadRequestObjectResult)
             };
             yield return new object[] {
                 new User()
@@ -93,7 +93,7 @@ namespace Chapi.IntegrationTests.MemberData
                     ProfilePicture = _defaultTestUser.ProfilePicture,
                     Applications = _defaultTestUser.Applications
                 },
-                typeof(BadRequestResult)
+                typeof(BadRequestObjectResult)
             };
             yield return new object[] {
                 new User()
@@ -104,11 +104,11 @@ namespace Chapi.IntegrationTests.MemberData
                     ProfilePicture = _defaultTestUser.ProfilePicture,
                     Applications = _defaultTestUser.Applications
                 },
-                typeof(BadRequestResult)
+                typeof(BadRequestObjectResult)
             };
             yield return new object[] {
                 new User(),
-                typeof(BadRequestResult)
+                typeof(BadRequestObjectResult)
             };
             yield return new object[] {
                 new User()
@@ -188,7 +188,7 @@ namespace Chapi.IntegrationTests.MemberData
                     ProfilePicture = _defaultTestUser.ProfilePicture,
                     Applications = _defaultTestUser.Applications
                 },
-                typeof(BadRequestResult)
+                typeof(BadRequestObjectResult)
             };
         }
 
@@ -214,7 +214,7 @@ namespace Chapi.IntegrationTests.MemberData
                     Organization = _defaultTestUser.Organization,
                     Name = _defaultTestUser.Name
                 },
-                typeof(BadRequestResult)
+                typeof(BadRequestObjectResult)
             };
         }
 
@@ -242,7 +242,7 @@ namespace Chapi.IntegrationTests.MemberData
                     Email = string.Empty,
                     Organization = _defaultTestUser.Organization
                 },
-                typeof(BadRequestResult)
+                typeof(BadRequestObjectResult)
             };
         }
     }
