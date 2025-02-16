@@ -3,7 +3,7 @@ using Chapi.Api.Models.Configuration;
 using Chapi.Api.Models.Exceptions.Common;
 using Chapi.Api.Services.Database;
 
-namespace Chapi.Api.Services.CrudServices
+namespace Chapi.Api.Services.DatabaseItemServices
 {
 
     public abstract class DatabaseItemService<T> : IDatabaseItemService<T> where T : IDatabaseItemWithId

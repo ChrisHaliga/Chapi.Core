@@ -1,13 +1,13 @@
 ﻿using Chapi.Api.Controllers;
-using Chapi.Api.Models.Configuration;
 using Chapi.Api.Models;
-using Chapi.Api.Services.CrudServices;
+using Chapi.Api.Models.Configuration;
+using Chapi.Api.Services.ApiServices;
+using Chapi.Api.Services.DatabaseItemServices;
+using Chapi.IntegrationTests.MemberData;
 using Chapi.IntegrationTests.Spies;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Chapi.Api.Services;
-using Chapi.IntegrationTests.MemberData;
 
 namespace Chapi.IntegrationTests
 {
@@ -43,15 +43,17 @@ namespace Chapi.IntegrationTests
 
             var runtimeInfo = new RuntimeInfo(true);
 
-            var groupService = new GroupService(groupsConfigData, new CosmosConfigData(cosmosDbiUri), CacheSpy, runtimeInfo);
-            var applicationService = new ApplicationService(applicationsConfigData, new CosmosConfigData(cosmosDbiUri), CacheSpy, runtimeInfo);
-            var userService = new UserService(usersConfigData, new CosmosConfigData(cosmosDbiUri), CacheSpy, runtimeInfo);
+            var groupService = new DatabaseGroupService(groupsConfigData, new CosmosConfigData(cosmosDbiUri), CacheSpy, runtimeInfo);
+            var applicationService = new DatabaseApplicationService(applicationsConfigData, new CosmosConfigData(cosmosDbiUri), CacheSpy, runtimeInfo);
+            var userService = new DatabaseUserService(usersConfigData, new CosmosConfigData(cosmosDbiUri), CacheSpy, runtimeInfo);
 
-            var chapiService = new ChapiService(userService, groupService, applicationService);
+            var userApiService = new UserApiService(userService, groupService, applicationService);
+            var groupApiService = new GroupApiService(userService, groupService, applicationService);
+            var applicationApiService = new ApplicationApiService(userService, groupService, applicationService);
 
-            UsersController = new UsersController(chapiService, runtimeInfo);
-            GroupsController = new GroupsController(chapiService, runtimeInfo);
-            ApplicationsController = new ApplicationsController(chapiService, runtimeInfo);
+            UsersController = new UsersController(userApiService, runtimeInfo);
+            GroupsController = new GroupsController(groupApiService, runtimeInfo);
+            ApplicationsController = new ApplicationsController(applicationApiService, runtimeInfo);
         }
 
         private static CrudConfigData<T> GetCrudConfigData<T>(IConfiguration configuration, string configKey)

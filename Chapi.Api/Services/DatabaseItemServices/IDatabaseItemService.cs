@@ -1,6 +1,6 @@
 ﻿using Chapi.Api.Models;
 
-namespace Chapi.Api.Services.CrudServices
+namespace Chapi.Api.Services.DatabaseItemServices
 {
     public interface IDatabaseItemService<T> where T : IDatabaseItemWithId
     {

@@ -41,7 +41,7 @@ namespace Chapi.Api.Models
 
 
 
-        public void SoftOverwrite(User overwriter)
+        public void SoftOverwriteWith(User overwriter)
         {
             Name = overwriter.Name ?? Name;
             ProfilePicture = overwriter.ProfilePicture ?? ProfilePicture;

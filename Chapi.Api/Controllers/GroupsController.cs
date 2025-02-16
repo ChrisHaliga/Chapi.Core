@@ -2,8 +2,7 @@
 using Chapi.Api.Models;
 using Chapi.Api.Models.Configuration;
 using Chapi.Api.Models.Exceptions.Common;
-using Chapi.Api.Services;
-using Chapi.Api.Services.CrudServices;
+using Chapi.Api.Services.ApiServices;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Chapi.Api.Controllers
@@ -11,7 +10,7 @@ namespace Chapi.Api.Controllers
     [ApiKeyAuthorization]
     [ApiController]
     [Route("[controller]")]
-    public class GroupsController(ChapiService ChapiService, RuntimeInfo RuntimeInfo) : ControllerBase
+    public class GroupsController(GroupApiService ApiService, RuntimeInfo RuntimeInfo) : ControllerBase
     {
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] string? organization = null, [FromQuery] string? name = null, CancellationToken cancellationToken = default)
@@ -20,14 +19,14 @@ namespace Chapi.Api.Controllers
             {
                 if (!string.IsNullOrEmpty(organization) && !string.IsNullOrEmpty(name))
                 {
-                    return Ok(await ChapiService.GetGroup(new GroupWithId(organization, name), cancellationToken));
+                    return Ok(await ApiService.GetItem(new GroupWithId(organization, name), cancellationToken));
                 }
                 if (!string.IsNullOrEmpty(organization))
                 {
-                    return Ok(await ChapiService.GetGroupsByOrganization(organization, cancellationToken));
+                    return Ok(await ApiService.GetItemByPartition(organization, cancellationToken));
                 }
 
-                return Ok(await ChapiService.GetAllGroups());
+                return Ok(await ApiService.GetAllItems());
             }
             catch (NotFoundException)
             {
@@ -53,7 +52,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await ChapiService.CreateGroup(new GroupWithId(group), cancellationToken));
+                return Ok(await ApiService.CreateItem(new GroupWithId(group), cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -79,7 +78,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await ChapiService.PutGroup(new GroupWithId(group), cancellationToken));
+                return Ok(await ApiService.PutItem(new GroupWithId(group), cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -105,7 +104,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await ChapiService.PatchGroup(new GroupWithId(group), cancellationToken));
+                return Ok(await ApiService.PatchItem(new GroupWithId(group), cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -131,7 +130,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                await ChapiService.DeleteGroup(new GroupWithId(group.ToGroup()), cancellationToken);
+                await ApiService.DeleteItem(new GroupWithId(group.ToGroup()), cancellationToken);
             return Ok();
             }
             catch (NotFoundException)

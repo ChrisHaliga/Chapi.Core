@@ -21,7 +21,7 @@ namespace Chapi.Api.Models
     {
         //PartitionKey
         public static bool IdIsOrganization(string? id) => string.IsNullOrEmpty(id) ? false : id.Split(':') is [var left, var right] && left == right;
-        public static string IdAsOrganization(string id) => $"{id}:{id}";
+        public static string IdAsOrganization(string? id) => $"{id}:{id}";
 
         public bool IsOrganization() => Name == Organization;
         public string? Organization { get; set; }
@@ -36,20 +36,20 @@ namespace Chapi.Api.Models
         public string? Parent { get; set; }
         public string? Description { get; set; }
         public string? ProfilePicture { get; set; }
-        public List<string> Members { get; set; } = [];
+        public List<string> Users { get; set; } = [];
         public List<ApplicationAccess> Applications { get; set; } = [];
         public List<string> Children { get; set; } = [];
 
 
-        public void SoftOverwrite(Group overwriter)
+        public void SoftOverwriteWith(Group overwriter)
         {
             Parent = overwriter.Parent ?? Parent;
             Description = overwriter.Description ?? Description;
             ProfilePicture = overwriter.ProfilePicture ?? ProfilePicture;
 
-            foreach (var member in overwriter.Members)
+            foreach (var member in overwriter.Users)
             {
-                Members.AddIfNotExists(member);
+                Users.AddIfNotExists(member);
             }
 
             foreach (var application in overwriter.Applications)
@@ -113,7 +113,7 @@ namespace Chapi.Api.Models
             Description = group.Description;
             ProfilePicture = group.ProfilePicture;
             Organization = group.Organization;
-            Members = group.Members;
+            Users = group.Users;
             Applications = group.Applications;
             Children = group.Children;
 

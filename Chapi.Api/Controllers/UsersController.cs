@@ -2,8 +2,7 @@
 using Chapi.Api.Models;
 using Chapi.Api.Models.Configuration;
 using Chapi.Api.Models.Exceptions.Common;
-using Chapi.Api.Services;
-using Chapi.Api.Services.CrudServices;
+using Chapi.Api.Services.ApiServices;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Chapi.Api.Controllers
@@ -11,7 +10,7 @@ namespace Chapi.Api.Controllers
     [ApiKeyAuthorization]
     [ApiController]
     [Route("[controller]")]
-    public class UsersController(ChapiService ChapiService, RuntimeInfo RuntimeInfo) : ControllerBase
+    public class UsersController(UserApiService ApiService, RuntimeInfo RuntimeInfo) : ControllerBase
     {
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] string? email = null, [FromQuery] string? organization = null, CancellationToken cancellationToken = default)
@@ -20,13 +19,13 @@ namespace Chapi.Api.Controllers
             {
                 if (!string.IsNullOrEmpty(email))
                 {
-                    return Ok(await ChapiService.GetUser(new UserWithId(email), cancellationToken));
+                    return Ok(await ApiService.GetItem(new UserWithId(email), cancellationToken));
                 }
                 if (!string.IsNullOrEmpty(organization))
                 {
-                    return Ok(await ChapiService.GetUsersByOrganization(organization, cancellationToken));
+                    return Ok(await ApiService.GetItemByPartition(organization, cancellationToken));
                 }
-                return Ok(await ChapiService.GetAllUsers(cancellationToken));
+                return Ok(await ApiService.GetAllItems(cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -52,7 +51,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await ChapiService.CreateUser(new UserWithId(user), cancellationToken));
+                return Ok(await ApiService.CreateItem(new UserWithId(user), cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -82,7 +81,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await ChapiService.PutUser(new UserWithId(user), cancellationToken));
+                return Ok(await ApiService.PutItem(new UserWithId(user), cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -108,7 +107,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                return Ok(await ChapiService.PatchUser(new UserWithId(user), cancellationToken));
+                return Ok(await ApiService.PatchItem(new UserWithId(user), cancellationToken));
             }
             catch (NotFoundException)
             {
@@ -134,7 +133,7 @@ namespace Chapi.Api.Controllers
         {
             try
             {
-                await ChapiService.DeleteUser(new UserWithId(userMinimal.ToUser()), cancellationToken);
+                await ApiService.DeleteItem(new UserWithId(userMinimal.ToUser()), cancellationToken);
                 return Ok();
             }
             catch (NotFoundException)
