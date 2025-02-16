@@ -1,10 +1,9 @@
 using Chapi.Api.Middleware;
+using Chapi.Api.Models;
 using Chapi.Api.Models.Configuration;
 using Chapi.Api.Services;
-using Chapi.Api.Services.CrudServices;
-using Chapi.Api.Models;
-using Microsoft.Extensions.DependencyInjection;
-using Chapi.Api.Services.Database;
+using Chapi.Api.Services.ApiServices;
+using Chapi.Api.Services.DatabaseItemServices;
 using Chapi.Api.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,10 +25,13 @@ builder.Services.AddSingleton(new RuntimeInfo(builder.Environment.IsDevelopment(
 
 builder.Services.AddTransient<ICacheService, CacheService>();
 
-builder.Services.AddTransient<UserService>();
-builder.Services.AddTransient<GroupService>();
-builder.Services.AddTransient<ApplicationService>();
-builder.Services.AddTransient<ChapiService>();
+builder.Services.AddTransient<DatabaseUserService>();
+builder.Services.AddTransient<DatabaseGroupService>();
+builder.Services.AddTransient<DatabaseApplicationService>();
+
+builder.Services.AddTransient<UserApiService>();
+builder.Services.AddTransient<GroupApiService>();
+builder.Services.AddTransient<ApplicationApiService>();
 
 builder.Services.AddDistributedMemoryCache();
 

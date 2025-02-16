@@ -33,7 +33,7 @@ namespace Chapi.Api.Models
 
         public string? Description { get; set; }
         public List<string> Users { get; set; } = [];
-        public List<string> GroupsIds { get; set; } = [];
+        public List<string> Groups { get; set; } = [];
         public List<string> Permissions { get; set; } = [];
         public List<Role> Roles { get; set; } = [];
         public object? Data { get; set; }
@@ -46,7 +46,7 @@ namespace Chapi.Api.Models
             public List<string> Permissions { get; set; } = [];
         }
 
-        public void SoftOverwrite(Application overwriter)
+        public void SoftOverwriteWith(Application overwriter)
         {
             Description = overwriter.Description;
 
@@ -60,9 +60,9 @@ namespace Chapi.Api.Models
                 Users.AddIfNotExists(user);
             }
             
-            foreach (var overwriterGroup in overwriter.GroupsIds)
+            foreach (var overwriterGroup in overwriter.Groups)
             {
-                GroupsIds.AddIfNotExists(overwriterGroup);
+                Groups.AddIfNotExists(overwriterGroup);
             }
 
             foreach (var overwriterPermission in overwriter.Permissions)
@@ -117,7 +117,7 @@ namespace Chapi.Api.Models
             Name = app.Name;
             Platform = app.Platform;
             Description = app.Description;
-            GroupsIds = app.GroupsIds;
+            Groups = app.Groups;
             Permissions = app.Permissions;
             Roles = app.Roles;
             Data = app.Data;
