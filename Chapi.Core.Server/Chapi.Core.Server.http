@@ -1,0 +1,6 @@
+@Chapi.Core.Server_HostAddress = http://localhost:5152
+
+GET {{Chapi.Core.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
