@@ -1,6 +1,11 @@
 <nav>
-  <app-navbar></app-navbar>
+  <app-topnav></app-topnav>
 </nav>
-<main class="container-fluid">
-  <router-outlet></router-outlet>
-</main>
+<div class="container-fluid">
+  <div class="row">
+    <app-sidenav></app-sidenav>
+    <main class="container-fluid">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

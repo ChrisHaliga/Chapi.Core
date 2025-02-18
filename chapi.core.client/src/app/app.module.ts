@@ -5,12 +5,14 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { AppRoutingModule } from '../app-routing.module';
-import { NavbarComponent } from '../components/navbar/navbar.component';
+import { TopnavComponent } from '../components/topnav/topnav.component';
+import { SidenavComponent } from '../components/sidenav/sidenav.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    NavbarComponent
+    TopnavComponent,
+    SidenavComponent
   ],
   bootstrap: [AppComponent],
   imports: [

@@ -1,0 +1,106 @@
+<header class="navbar navbar-dark sticky-top bg-dark py-0 shadow d-flex align-items-center"
+        style="gap: 0.75rem; width: 100%; min-height: 56px;">
+  <!-- Desktop brand: visible on md+; hidden below md -->
+  <a class="navbar-brand d-none d-md-inline-block px-3 col-7 col-sm-4 col-md-3 col-lg-2"
+     href="#">
+    Chapi
+  </a>
+
+  <!-- Mobile hamburger: hidden on md+; shown below md -->
+  <button class="navbar-toggler d-md-none px-3"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#sidebarMenu"
+          aria-controls="sidebarMenu"
+          aria-expanded="false"
+          aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <!-- Category Dropdown -->
+  <div class="nav-item dropdown">
+    <button class="btn btn-dark dropdown-toggle"
+            type="button"
+            id="dropdownMenuButton"
+            data-bs-toggle="dropdown"
+            aria-expanded="false">
+      {{ searchCategory }}
+    </button>
+    <ul class="dropdown-menu dropdown-menu-dark"
+        aria-labelledby="dropdownMenuButton">
+      <li *ngFor="let option of searchCategoryOptions">
+        <button class="dropdown-item"
+                type="button"
+                (click)="onCategorySelect(option)">
+          {{ option }}
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Search Input (flex: 1 takes remaining space) -->
+  <input #searchInput
+         class="form-control form-control-dark"
+         style="flex: 1;"
+         type="text"
+         placeholder="Search"
+         aria-label="Search"
+         (keyup.enter)="onSearchEnter(searchInput.value)"
+         [value]="searchTerm"
+         list="datalistOptions" />
+
+  <datalist id="datalistOptions">
+    <option *ngFor="let result of searchResults.slice(0, 10)"
+            [value]="result">
+  </datalist>
+
+  <!-- Profile Dropdown -->
+  <div class="nav-item dropdown px-2">
+    <a class="nav-link dropdown-toggle d-flex align-items-center"
+       href="#"
+       id="profileDropdown"
+       role="button"
+       data-bs-toggle="dropdown"
+       aria-expanded="false">
+      <img *ngIf="profileImage; else defaultProfileSVG"
+           [src]="profileImage"
+           alt="Profile"
+           width="32"
+           height="32"
+           class="rounded-circle me-2" />
+      <ng-template #defaultProfileSVG>
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="32"
+             height="32"
+             fill="currentColor"
+             class="bi bi-person-circle me-2"
+             viewBox="0 0 16 16">
+          <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+          <path fill-rule="evenodd"
+                d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8
+               m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226
+               4.805 10 8 10s4.757 1.225 5.468 2.37
+               A7 7 0 0 0 8 1" />
+        </svg>
+      </ng-template>
+      <!-- Hide username below md -->
+      <span class="d-none d-md-inline">{{ username }}</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark"
+        aria-labelledby="profileDropdown">
+      <li>
+        <a class="dropdown-item" href="#">
+          Settings
+        </a>
+      </li>
+      <li>
+        <hr class="dropdown-divider" />
+      </li>
+      <li>
+        <a class="dropdown-item" href="#" (click)="onSignOut()">
+          Sign out
+        </a>
+      </li>
+    </ul>
+  </div>
+</header>
