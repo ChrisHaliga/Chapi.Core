@@ -9,7 +9,7 @@ namespace Chapi.Api.Controllers
 {
     [ApiKeyAuthorization]
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class UsersController(UserApiService ApiService, RuntimeInfo RuntimeInfo) : ControllerBase
     {
         [HttpGet]
