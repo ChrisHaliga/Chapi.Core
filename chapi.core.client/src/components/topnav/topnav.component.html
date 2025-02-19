@@ -3,19 +3,8 @@
   <!-- Desktop brand: visible on md+; hidden below md -->
   <a class="navbar-brand d-none d-md-inline-block px-3 col-7 col-sm-4 col-md-3 col-lg-2"
      href="#">
-    Chapi
+    Chapi User Management
   </a>
-
-  <!-- Mobile hamburger: hidden on md+; shown below md -->
-  <button class="navbar-toggler d-md-none px-3"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#sidebarMenu"
-          aria-controls="sidebarMenu"
-          aria-expanded="false"
-          aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
 
   <!-- Category Dropdown -->
   <div class="nav-item dropdown">
@@ -89,7 +78,7 @@
     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark"
         aria-labelledby="profileDropdown">
       <li>
-        <a class="dropdown-item" href="#">
+        <a class="dropdown-item" [routerLink]="['/settings']">
           Settings
         </a>
       </li>

@@ -25,12 +25,7 @@ body {
   padding: 48px 0 0; /* Height of navbar */
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
   background-color: #111519 !important;
-}
-
-@media (max-width: 767.98px) {
-  .sidebar {
-    top: 5rem;
-  }
+  transition: 0.2s ease-out;
 }
 
 .sidebar-sticky {
@@ -47,29 +42,54 @@ body {
   color: #999;
 }
 
-  .sidebar .nav-link .feather {
-    margin-right: 4px;
-    color: #777;
-  }
+.sidebar .nav-link .feather {
+  margin-right: 4px;
+  color: #777;
+}
 
-  .sidebar .nav-link.active {
-    color: #fff;
-  }
+.sidebar .nav-link.active {
+  color: #fff;
+}
 
-    .sidebar .nav-link:hover .feather,
-    .sidebar .nav-link.active .feather {
-      color: inherit;
-    }
+.sidebar .nav-link:hover .feather,
+.sidebar .nav-link.active .feather {
+  color: inherit;
+}
 
 .sidebar-heading {
   font-size: .75rem;
   text-transform: uppercase;
 }
 
+#sidenavbutton {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  left: 0px;
+  height: 64px;
+  border: none;
+  border-top: 2px solid #222;
+  text-decoration: none;
+  text-align: right;
+  background-color:transparent;
+}
+
+#sidenavbutton > svg{
+    margin-right: 16px;
+}
+
+.sidebar.collapsed {
+  width: 48px;
+  transition: 0.2s ease-out;
+}
+
+.sidebar.opened {
+  transition: 0.2s ease-out;
+}
+
 /*
  * Navbar
  */
-
 .navbar-brand {
   padding-top: .75rem;
   padding-bottom: .75rem;
@@ -111,6 +131,16 @@ body {
 .small-screen {
   display: none;
 }
+
+.hidden{
+    visibility:hidden;
+}
+
+#profileDropdown::after{
+    display:none;
+}
+
+
 @media screen and (max-width: 1080px) {
   .big-screen {
     display: none;

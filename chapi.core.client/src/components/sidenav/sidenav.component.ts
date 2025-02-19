@@ -9,5 +9,9 @@ import { Component } from '@angular/core';
 })
 
 export class SidenavComponent {
+  isCollapsed = false;
 
+  toggleSidebar() {
+    this.isCollapsed = !this.isCollapsed;
+  }
 }
