@@ -97,12 +97,17 @@ body {
   bottom:0;
   left:0;
   right:0;
-  font-size: 12px;
+  font-size: 3.5vw;
 }
 
-.bottomnav-item{
-    display:flex;
-    flex-direction:row;
+.nav-item-bottom {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* Keeps everything vertically aligned */
+  max-width: 64px; /* Ensures a uniform layout */
+  width:5%;
 }
 /*
  * Navbar

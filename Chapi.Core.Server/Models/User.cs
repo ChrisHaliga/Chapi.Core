@@ -20,7 +20,6 @@ namespace Chapi.Api.Models
 
     public class User : DatabaseItem
     {
-        public static readonly string DefaultOrganization = "unassigned";
 
         //PartitionKey
         public string? Organization { get; set; }
