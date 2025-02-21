@@ -7,12 +7,14 @@ import { ServiceWorkerModule } from '@angular/service-worker';
 import { AppRoutingModule } from '../app-routing.module';
 import { TopnavComponent } from '../components/topnav/topnav.component';
 import { SidenavComponent } from '../components/sidenav/sidenav.component';
+import { BottomnavComponent } from '../components/bottomnav/bottomnav.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     TopnavComponent,
-    SidenavComponent
+    SidenavComponent,
+    BottomnavComponent
   ],
   bootstrap: [AppComponent],
   imports: [

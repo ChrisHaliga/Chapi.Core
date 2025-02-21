@@ -3,9 +3,10 @@
 </nav>
 <div class="container-fluid">
   <div class="row">
-    <app-sidenav></app-sidenav>
+    <app-sidenav class="d-none d-md-block"></app-sidenav>
     <main class="container-fluid">
       <router-outlet></router-outlet>
     </main>
+    <app-bottomnav class="d-md-none"></app-bottomnav>
   </div>
 </div>

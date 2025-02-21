@@ -88,6 +88,23 @@ body {
 }
 
 /*
+    BottomNav
+*/
+#bottomnav{
+  position:absolute;
+  display:flex;
+  flex-direction:column;
+  bottom:0;
+  left:0;
+  right:0;
+  font-size: 12px;
+}
+
+.bottomnav-item{
+    display:flex;
+    flex-direction:row;
+}
+/*
  * Navbar
  */
 .navbar-brand {
@@ -138,6 +155,14 @@ body {
 
 #profileDropdown::after{
     display:none;
+}
+
+.nav-link > * {
+  color: #999;
+}
+
+.nav-link.active > *{
+    color: white;
 }
 
 
