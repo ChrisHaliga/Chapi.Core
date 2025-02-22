@@ -35,6 +35,7 @@ export class TopnavComponent {
   }
 
   searchCategoryOptions: string[] = [
+    "all",
     "users",
     "groups",
     "organizations",
@@ -42,14 +43,6 @@ export class TopnavComponent {
   ]
 
   searchCategory: string = this.searchCategoryOptions[0];
-
-  searchResults: string[] = [
-    'San Francisco', 'New York', 'Seattle',
-    'Los Angeles', 'Chicago', 'Miami',
-    'Boston', 'Houston', 'Dallas',
-    'Phoenix', 'Denver', 'Atlanta',
-    'Orlando', 'Portland'
-  ];
 
   searchTerm = '';
 

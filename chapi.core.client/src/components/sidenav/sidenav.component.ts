@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 
 
 @Component({
@@ -10,8 +10,10 @@ import { Component } from '@angular/core';
 
 export class SidenavComponent {
   isCollapsed = false;
+  @Output() sidebarExpandedEvent = new EventEmitter<boolean>();
 
   toggleSidebar() {
     this.isCollapsed = !this.isCollapsed;
+    this.sidebarExpandedEvent.emit(this.isCollapsed);
   }
 }

@@ -1,14 +1,33 @@
 :host {
-    display:flex;
-    flex-direction:column;
-    height: 100vh;
-    overflow-y:scroll;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow-y: scroll;
 }
 
-nav{
-    flex:0;
+nav {
+  flex: 0;
 }
 
-main{
-    flex:1;
+main {
+  position: absolute;
+  left: 256px;
+  top: 48px;
+  right: 0;
+  bottom: 0;
+  padding: 12px 16px;
+  width: calc(100% - 256px);
+  transition: 0.2s ease-out;
+}
+
+main.collapsed {
+  left: 48px;
+  width: calc(100% - 48px);
+}
+
+@media screen and (max-width: 768px) {
+  main, main.collapsed {
+    left: 0;
+    width: 100%;
+  }
 }

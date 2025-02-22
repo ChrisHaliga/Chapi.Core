@@ -1,49 +1,18 @@
-<header class="navbar navbar-dark sticky-top bg-dark py-0 shadow d-flex align-items-center"
-        style="gap: 0.75rem; width: 100%; min-height: 56px;">
-  <!-- Desktop brand: visible on md+; hidden below md -->
-  <a class="navbar-brand d-none d-md-inline-block px-3 col-7 col-sm-4 col-md-3 col-lg-2"
+<header class="navbar navbar-dark bg-dark py-0 shadow d-flex align-items-center">
+  <a class="navbar-brand d-none d-md-inline-block px-3"
      href="#">
     Chapi User Management
   </a>
 
-  <!-- Category Dropdown -->
-  <div class="nav-item dropdown">
-    <button class="btn btn-dark dropdown-toggle"
-            type="button"
-            id="dropdownMenuButton"
-            data-bs-toggle="dropdown"
-            aria-expanded="false">
-      {{ searchCategory }}
-    </button>
-    <ul class="dropdown-menu dropdown-menu-dark"
-        aria-labelledby="dropdownMenuButton">
-      <li *ngFor="let option of searchCategoryOptions">
-        <button class="dropdown-item"
-                type="button"
-                (click)="onCategorySelect(option)">
-          {{ option }}
-        </button>
-      </li>
-    </ul>
-  </div>
-
-  <!-- Search Input (flex: 1 takes remaining space) -->
   <input #searchInput
          class="form-control form-control-dark"
-         style="flex: 1;"
          type="text"
          placeholder="Search"
          aria-label="Search"
          (keyup.enter)="onSearchEnter(searchInput.value)"
          [value]="searchTerm"
-         list="datalistOptions" />
+         />
 
-  <datalist id="datalistOptions">
-    <option *ngFor="let result of searchResults.slice(0, 10)"
-            [value]="result">
-  </datalist>
-
-  <!-- Profile Dropdown -->
   <div class="nav-item dropdown px-2">
     <a class="nav-link dropdown-toggle d-flex align-items-center"
        href="#"
@@ -72,7 +41,6 @@
                A7 7 0 0 0 8 1" />
         </svg>
       </ng-template>
-      <!-- Hide username below md -->
       <span class="d-none d-md-inline">{{ username }}</span>
     </a>
     <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark"

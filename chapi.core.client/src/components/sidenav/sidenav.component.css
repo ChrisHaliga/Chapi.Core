@@ -1,4 +1,56 @@
+#sidenav {
+  position: absolute;
+  left:0;
+  top:48px;
+  bottom:0;
+  width:256px;
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+  background-color: #111519 !important;
+  transition: 0.2s ease-out;
+}
 
-nav {
-  background-color: #000C;
+#sidenav.collapsed{
+  width:48px;
+}
+
+.sidebar .nav-link {
+  font-weight: 500;
+  color: #999;
+}
+
+.feather {
+  width: 16px;
+  height: 16px;
+  vertical-align: text-bottom;
+}
+
+.sidebar .nav-link .feather {
+  margin-right: 4px;
+  color: #777;
+}
+
+.sidebar .nav-link.active {
+  color: #fff;
+}
+
+.sidebar-heading {
+  font-size: .75rem;
+  text-transform: uppercase;
+}
+
+#sidenavbutton {
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  left: 0px;
+  height: 64px;
+  border: none;
+  border-top: 2px solid #222;
+  text-decoration: none;
+  text-align: right;
+  background-color: transparent;
+}
+
+#sidenavbutton > svg {
+  margin-right: 16px;
 }
