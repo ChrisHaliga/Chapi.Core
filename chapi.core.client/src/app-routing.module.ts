@@ -6,15 +6,16 @@ import { GroupsPage } from './pages/groups/groups.page';
 import { OrganizationsPage } from './pages/organizations/organizations.page';
 import { ApplicationsPage } from './pages/applications/applications.page';
 import { SettingsPage } from './pages/settings/settings.page';
+import { AuthGuard } from './services/authService';
 
 const routes: Routes = [
   { path: "", redirectTo: "/home", pathMatch: "full" },
   { path: "home", component: HomePage },
-  { path: "users", component: UsersPage },
-  { path: "groups", component: GroupsPage },
-  { path: "organizations", component: OrganizationsPage },
-  { path: "applications", component: ApplicationsPage },
-  { path: "settings", component: SettingsPage }
+  { path: "users", component: UsersPage, canActivate: [AuthGuard] },
+  { path: "groups", component: GroupsPage, canActivate: [AuthGuard] },
+  { path: "organizations", component: OrganizationsPage, canActivate: [AuthGuard] },
+  { path: "applications", component: ApplicationsPage, canActivate: [AuthGuard] },
+  { path: "settings", component: SettingsPage, canActivate: [AuthGuard] }
 ];
 
 @NgModule({

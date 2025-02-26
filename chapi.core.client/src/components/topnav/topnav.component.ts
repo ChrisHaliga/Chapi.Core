@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AuthService } from '../../services/authService';
 
 @Component({
   selector: 'app-topnav',
@@ -10,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 export class TopnavComponent {
   constructor(
+    @Inject(AuthService) public auth: AuthService,
     private route: ActivatedRoute,
     private router: Router
   ) { }
@@ -66,6 +68,6 @@ export class TopnavComponent {
   }
 
   onSignOut() {
-    alert("TODO")
+    this.auth.logout();
   }
 }

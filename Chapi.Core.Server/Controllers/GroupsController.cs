@@ -7,12 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Chapi.Api.Controllers
 {
-    [ApiKeyAuthorization]
     [ApiController]
     [Route("api/[controller]")]
     public class GroupsController(GroupApiService ApiService, RuntimeInfo RuntimeInfo) : ControllerBase
     {
         [HttpGet]
+        [CustomAuthorization(["reader"])]
         public async Task<IActionResult> Get([FromQuery] string? organization = null, [FromQuery] string? name = null, CancellationToken cancellationToken = default)
         {
             try
@@ -48,6 +48,7 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpPost]
+        [CustomAuthorization(["writer"])]
         public async Task<IActionResult> Post([FromBody] Group group, CancellationToken cancellationToken)
         {
             try
@@ -74,6 +75,7 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpPut]
+        [CustomAuthorization(["writer"])]
         public async Task<IActionResult> Put([FromBody] Group group, CancellationToken cancellationToken)
         {
             try
@@ -100,6 +102,7 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpPatch]
+        [CustomAuthorization(["writer"])]
         public async Task<IActionResult> Patch([FromBody] Group group, CancellationToken cancellationToken)
         {
             try
@@ -126,6 +129,7 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpDelete]
+        [CustomAuthorization(["writer"])]
         public async Task<IActionResult> Delete([FromBody] GroupMinimalDto group, CancellationToken cancellationToken)
         {
             try

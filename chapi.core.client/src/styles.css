@@ -13,8 +13,21 @@ body {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
 }
 
+.form-group{
+    margin:16px 0;
+}
+
 .fs-7 {
   font-size: .9rem !important;
+}
+
+.icon-button {
+  cursor: pointer; /* Makes the cursor a pointer */
+  transition: transform 0.2s ease-in-out; /* Smooth effect */
+}
+
+.icon-button:hover {
+  transform: scale(1.2); /* Slightly enlarge on hover */
 }
 
 .big-screen {

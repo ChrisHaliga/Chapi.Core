@@ -7,12 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Chapi.Api.Controllers
 {
-    [ApiKeyAuthorization]
     [ApiController]
     [Route("api/[controller]")]
     public class UsersController(UserApiService ApiService, RuntimeInfo RuntimeInfo) : ControllerBase
     {
         [HttpGet]
+        [CustomAuthorization(["reader"])]
         public async Task<IActionResult> Get([FromQuery] string? email = null, [FromQuery] string? organization = null, CancellationToken cancellationToken = default)
         {
             try
@@ -47,6 +47,7 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpPost]
+        [CustomAuthorization(["writer"])]
         public async Task<IActionResult> Post([FromBody] User user, CancellationToken cancellationToken)
         {
             try
@@ -77,6 +78,7 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpPut]
+        [CustomAuthorization(["writer"])]
         public async Task<IActionResult> Put([FromBody] User user, CancellationToken cancellationToken)
         {
             try
@@ -103,6 +105,7 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpPatch]
+        [CustomAuthorization(["writer"])]
         public async Task<IActionResult> Patch([FromBody] User user, CancellationToken cancellationToken)
         {
             try
@@ -129,6 +132,7 @@ namespace Chapi.Api.Controllers
         }
 
         [HttpDelete]
+        [CustomAuthorization(["writer"])]
         public async Task<IActionResult> Delete([FromBody] UserMinimalDto userMinimal, CancellationToken cancellationToken)
         {
             try
