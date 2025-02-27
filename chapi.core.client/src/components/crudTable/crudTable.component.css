@@ -1,0 +1,43 @@
+.bi {
+  margin-right: 4px;
+}
+
+.btn-nav-group {
+  border-bottom: 1px solid #666;
+  margin-bottom: 16px;
+}
+
+.btn-nav {
+  max-width: fit-content;
+  padding: 8px 16px;
+  border-radius: 0;
+}
+
+  .btn-nav:disabled {
+    border: none;
+    color: #999;
+  }
+
+.btn-danger:disabled {
+  color: #aaa;
+  background-color: #955;
+  border: 1px solid #733;
+}
+
+.btn-nav:hover {
+  background-color: #445;
+}
+
+.check-select {
+  zoom: 1.25;
+  margin-right: 8px;
+  accent-color: #ccd;
+}
+
+.table-fit {
+  width: 1px;
+}
+
+td:hover {
+  cursor: pointer;
+}

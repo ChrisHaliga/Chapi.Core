@@ -4,11 +4,12 @@ import { Observable, shareReplay } from 'rxjs';
 import { User } from '../../models/user';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { CrudTable } from '../../components/crudTable/crudTable.component';
 
 @Component({
   selector: 'users',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CrudTable],
   templateUrl: './users.page.html',
   styleUrls: ['./users.page.css']
 })
@@ -25,20 +26,38 @@ export class UsersPage {
     );
   }
 
-  public create() {
+  public fields = {
+    Name: (user: User) => user.name,
+    Organization: (user: User) => user.organization,
+    Email: (user: User) => user.email
+  };
+
+  public getDisplayName = (user: User): string => {
+    return user.email;
+  }
+
+  public onCreate = () => {
     this.selectedUser = new User();
     this.modify = true;
-  }
+  };
 
-
-  public edit(selectedUser: User) {
-    this.selectedUser = selectedUser;
+  public onEdit = (user: User) => {
+    this.selectedUser = user;
     this.modify = true;
-  }
+  };
 
-  public delete(selectedUser: User) {
-    alert("TODO")
-  }
+  public onView = (user: User) => {
+    this.selectedUser = user;
+    this.modify = false;
+  };
+
+  public onDelete = (user: User) => {
+    alert(`Delete user: ${user.name}`);
+  };
+
+  public onRefresh = () => {
+    alert("Refresh user list");
+  };
 
   public list() {
     this.selectedUser = null;
