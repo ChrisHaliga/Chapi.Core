@@ -1,5 +1,3 @@
-
-
 export class User {
   public organization: string = "";
   public email: string = "";
@@ -7,4 +5,9 @@ export class User {
   public profilePicture: string = "";
   public applications: string = "";
   public groups: string = "";
+}
+
+export interface SelectOption {
+  id: string;
+  name: string;
 }

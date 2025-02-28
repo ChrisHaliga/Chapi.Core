@@ -1,0 +1,28 @@
+<!-- user-edit.component.html -->
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Edit User</h2>
+    <button class="btn btn-outline-secondary" (click)="cancel()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16" style="vertical-align: -2px;">
+        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+      </svg>
+      Cancel
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="text-center my-5">
+    <div class="loader"></div>
+    <p class="mt-2">Loading user data...</p>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+
+  <app-user-form *ngIf="!loading && !error"
+                 [user]="user"
+                 [isEditMode]="true"
+                 (save)="saveUser($event)"
+                 (cancel)="cancel()">
+  </app-user-form>
+</div>

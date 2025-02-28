@@ -23,6 +23,7 @@
     "@angular/router": "^19.1.6",
     "@angular/service-worker": "^19.1.6",
     "@auth0/auth0-angular": "^2.2.3",
+    "@ng-select/ng-select": "^14.2.2",
     "bootstrap": "^5.3.3",
     "jest-editor-support": "*",
     "run-script-os": "*",

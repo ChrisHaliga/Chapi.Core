@@ -12,6 +12,7 @@ import { SidenavComponent } from '../components/sidenav/sidenav.component';
 import { BottomnavComponent } from '../components/bottomnav/bottomnav.component';
 import { environment } from '../environments/environment';
 import { AuthHttpInterceptor, AuthModule } from '@auth0/auth0-angular';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @NgModule({
   declarations: [
@@ -27,6 +28,7 @@ import { AuthHttpInterceptor, AuthModule } from '@auth0/auth0-angular';
     CommonModule,
     FormsModule,
     HttpClientModule,
+    NgSelectModule,
     ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: !isDevMode(),
       // Register the ServiceWorker as soon as the application is stable

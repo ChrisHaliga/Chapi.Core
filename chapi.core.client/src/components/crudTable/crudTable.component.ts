@@ -1,16 +1,17 @@
+// components/crudTable/crudTable.component.ts
 import { Component, Input } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DeleteConfirmationModalComponent } from '../delete-confirmation-modal/delete-confirmation-modal.component';
 
 @Component({
   selector: 'app-crud-table',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DeleteConfirmationModalComponent],
   templateUrl: './crudTable.component.html',
   styleUrls: ['./crudTable.component.css']
 })
-
 export class CrudTable<T> {
   @Input() items$!: Observable<T[]>;
   @Input() fields!: { [key: string]: (item: T) => string };
@@ -21,11 +22,9 @@ export class CrudTable<T> {
   @Input() onRefresh!: () => void;
   @Input() getDisplayName!: (item: T) => string;
 
-
   public selectedItems: Map<string, boolean> = new Map();
   public allSelected: boolean = false;
   public hasSelectedItems: boolean = false;
-  public userConfirmationText: string = "";
   public confirmationText: string = "";
 
   toggleItem(key: string) {
@@ -54,7 +53,7 @@ export class CrudTable<T> {
     }
 
     this.items$.subscribe(items => {
-      for(let item of items){
+      for (let item of items) {
         if (this.selectedItems.get(this.getItemKey(item))) {
           this.confirmationText = this.getDisplayName(item);
           break;
@@ -83,24 +82,17 @@ export class CrudTable<T> {
     return Object.keys(this.fields);
   }
 
-  isDeleteConfirmed() {
-    return this.userConfirmationText != this.confirmationText
-  }
-
-  confirmDelete(): void {
+  handleDeleteConfirmation(): void {
     this.items$.subscribe(items => {
       items.forEach(item => {
         if (this.selectedItems.get(this.getItemKey(item))) {
           this.onDelete(item);
         }
       });
+      this.selectedItems.clear();
+      this.hasSelectedItems = false;
+      this.allSelected = false;
       this.onRefresh();
     });
-    this.resetDelete()
-  }
-
-  resetDelete(): void {
-    this.userConfirmationText = "";
-    this.confirmationText= "";
   }
 }

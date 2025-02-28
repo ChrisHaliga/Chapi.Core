@@ -34,10 +34,32 @@
   accent-color: #ccd;
 }
 
-.table-fit {
-  width: 1px;
+.w-min {
+  width: min-content;
 }
 
-td:hover {
-  cursor: pointer;
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  table-layout: auto;
+}
+
+/* Set minimum width for checkbox column */
+.w-min {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* For all other columns */
+.table th:not(.w-min),
+.table td:not(.w-min) {
+  min-width: 0; /* Allow columns to shrink below content width */
+  max-width: none; /* We'll calculate this with JavaScript */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

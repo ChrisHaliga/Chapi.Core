@@ -21,6 +21,10 @@ body {
   font-size: .9rem !important;
 }
 
+.w-min {
+  width: min-content;
+}
+
 .icon-button {
   cursor: pointer;
   transition: transform 0.2s ease-in-out;
@@ -70,5 +74,21 @@ body {
 
   .small-screen {
     display: inline-block;
+  }
+
+  body {
+    font-size: .75rem;
+  }
+
+  button {
+    font-size: .875rem !important;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  svg {
+    transform: scale(.8);
   }
 }

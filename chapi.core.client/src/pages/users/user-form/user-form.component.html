@@ -1,0 +1,111 @@
+<!-- shared/user-form.component.html -->
+<div class="card shadow-sm">
+  <div class="card-header bg-light">
+    <h4 class="mb-0">{{ isEditMode ? 'Edit User' : 'Create New User' }}</h4>
+  </div>
+  <div class="card-body">
+    <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+      <!-- Organization Selection -->
+      <div class="mb-3">
+        <label for="organization" class="form-label">Organization</label>
+        <select id="organization"
+                formControlName="organization"
+                class="form-select"
+                [ngClass]="{'is-invalid': submitted && f['organization'].errors}">
+          <option value="" disabled>Select an organization</option>
+          <option *ngFor="let org of organizations" [value]="org">{{org}}</option>
+        </select>
+        <div *ngIf="submitted && f['organization'].errors" class="invalid-feedback">
+          <div *ngIf="f['organization'].errors['required']">Organization is required</div>
+        </div>
+      </div>
+
+      <!-- Two columns for email and name -->
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input type="email"
+                 id="email"
+                 formControlName="email"
+                 class="form-control"
+                 [ngClass]="{'is-invalid': submitted && f['email'].errors}"
+                 placeholder="Enter email"
+                 [readonly]="isEditMode">
+          <div *ngIf="submitted && f['email'].errors" class="invalid-feedback">
+            <div *ngIf="f['email'].errors['required']">Email is required</div>
+            <div *ngIf="f['email'].errors['email']">Please enter a valid email</div>
+          </div>
+          <div *ngIf="isEditMode" class="form-text text-muted">
+            Email cannot be changed as it's used as the unique identifier
+          </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label for="name" class="form-label">Name</label>
+          <input type="text"
+                 id="name"
+                 formControlName="name"
+                 class="form-control"
+                 [ngClass]="{'is-invalid': submitted && f['name'].errors}"
+                 placeholder="Enter full name">
+          <div *ngIf="submitted && f['name'].errors" class="invalid-feedback">
+            <div *ngIf="f['name'].errors['required']">Name is required</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Picture Upload -->
+      <div class="mb-3">
+        <label for="profilePicture" class="form-label">Profile Picture</label>
+        <div class="d-flex align-items-center gap-3">
+          <div *ngIf="previewUrl" class="profile-preview rounded-circle">
+            <img [src]="previewUrl" alt="Profile Preview" class="img-fluid rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+          </div>
+          <div class="flex-grow-1">
+            <input type="file"
+                   id="profilePicture"
+                   class="form-control"
+                   (change)="onFileChange($event)"
+                   accept="image/*">
+            <div *ngIf="submitted && !profilePictureValid" class="text-danger mt-1">Please select a valid image file</div>
+            <small class="text-muted">Recommended size: 200x200 pixels</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Applications Multi-select -->
+      <div class="mb-3">
+        <label for="applications" class="form-label">Applications</label>
+        <ng-select [items]="availableApplications"
+                   [multiple]="true"
+                   bindLabel="name"
+                   bindValue="id"
+                   placeholder="Select applications"
+                   formControlName="applications"
+                   id="applications">
+        </ng-select>
+        <small class="text-muted">Select all applications the user should have access to</small>
+      </div>
+
+      <!-- Groups Multi-select -->
+      <div class="mb-3">
+        <label for="groups" class="form-label">Groups</label>
+        <ng-select [items]="availableGroups"
+                   [multiple]="true"
+                   bindLabel="name"
+                   bindValue="id"
+                   placeholder="Select groups"
+                   formControlName="groups"
+                   id="groups">
+        </ng-select>
+        <small class="text-muted">Select all groups the user should belong to</small>
+      </div>
+
+      <!-- Form Buttons -->
+      <div class="d-flex justify-content-end gap-2 mt-4">
+        <button type="button" class="btn btn-outline-secondary" (click)="resetForm()">Cancel</button>
+        <button type="submit" class="btn btn-primary">{{ isEditMode ? 'Update' : 'Create' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
